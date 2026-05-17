@@ -137,3 +137,87 @@ def get_auditoria_asignatura(asignatura: str) -> list[AsignaturasAudit]:
                     userid=r[3], asignatura_id=r[4], profesor_id=r[5], nombre=r[6]
                 ) for r in cur.fetchall()
             ]
+
+# --- CRUD Alumnos ---
+def get_alumno(alumno_id: int) -> Alumnos | None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT alumno_id, nombre, email_alumno FROM alumnos WHERE alumno_id = %s", (alumno_id,))
+            r = cur.fetchone()
+            if r:
+                return Alumnos(id=r[0], name=r[1], email=r[2])
+            return None
+
+def insert_alumno(nombre: str, email_alumno: str) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO alumnos (nombre, email_alumno) VALUES (%s, %s)", (nombre, email_alumno))
+        conn.commit()
+
+def update_alumno(alumno_id: int, nombre: str, email_alumno: str) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE alumnos SET nombre = %s, email_alumno = %s WHERE alumno_id = %s", (nombre, email_alumno, alumno_id))
+        conn.commit()
+
+def delete_alumno(alumno_id: int) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM alumnos WHERE alumno_id = %s", (alumno_id,))
+        conn.commit()
+
+# --- CRUD Profesores ---
+def get_profesor(profesor_id: int) -> Profesores | None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT profesor_id, nombre, email_profesor FROM profesores WHERE profesor_id = %s", (profesor_id,))
+            r = cur.fetchone()
+            if r:
+                return Profesores(id=r[0], name=r[1], email=r[2])
+            return None
+
+def insert_profesor(nombre: str, email_profesor: str) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO profesores (nombre, email_profesor) VALUES (%s, %s)", (nombre, email_profesor))
+        conn.commit()
+
+def update_profesor(profesor_id: int, nombre: str, email_profesor: str) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE profesores SET nombre = %s, email_profesor = %s WHERE profesor_id = %s", (nombre, email_profesor, profesor_id))
+        conn.commit()
+
+def delete_profesor(profesor_id: int) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM profesores WHERE profesor_id = %s", (profesor_id,))
+        conn.commit()
+
+# --- CRUD Asignaturas ---
+def get_asignatura(asignatura_id: int) -> Asignaturas | None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT asignatura_id, nombre, profesor_id FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
+            r = cur.fetchone()
+            if r:
+                return Asignaturas(id=r[0], name=r[1], id_profesor=r[2])
+            return None
+
+def insert_asignatura(nombre: str, profesor_id: int | None) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO asignaturas (nombre, profesor_id) VALUES (%s, %s)", (nombre, profesor_id))
+        conn.commit()
+
+def update_asignatura(asignatura_id: int, nombre: str, profesor_id: int | None) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE asignaturas SET nombre = %s, profesor_id = %s WHERE asignatura_id = %s", (nombre, profesor_id, asignatura_id))
+        conn.commit()
+
+def delete_asignatura(asignatura_id: int) -> None:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
+        conn.commit()

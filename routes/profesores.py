@@ -1,13 +1,11 @@
 """Rutas del recurso profesor."""
 from __future__ import annotations
 
-from flask import Blueprint, render_template
-
-from flask import request
+from flask import Blueprint, render_template, request, redirect, url_for
 
 from models.entities import ProfesoresAudit
 
-from models.db import get_profesores, get_auditoria_general, get_auditoria_profesor
+from models.db import get_profesores, get_auditoria_general, get_auditoria_profesor, insert_profesor, update_profesor, delete_profesor, get_profesor
 
 profesores_bp = Blueprint("profesores", __name__, url_prefix="/profesores")
 
@@ -36,7 +34,34 @@ def auditoria_general():
         titulo = f"Sin resultados para: '{search_query}' (Solo se permiten IDs numéricos)"
         
     return render_template(
-        "auditoria_profesores.html", 
+        "auditoria_profesores.html",
         auditoria=historial, 
         id_profe=titulo
     )
+
+@profesores_bp.route("/add", methods=["POST"])
+def add():
+    nombre = request.form.get("nombre")
+    email = request.form.get("email")
+    if nombre and email:
+        insert_profesor(nombre, email)
+    return redirect(url_for("profesores.list_"))
+
+@profesores_bp.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit(id):
+    if request.method == "POST":
+        nombre = request.form.get("nombre")
+        email = request.form.get("email")
+        if nombre and email:
+            update_profesor(id, nombre, email)
+        return redirect(url_for("profesores.list_"))
+    
+    profesor = get_profesor(id)
+    if not profesor:
+        return redirect(url_for("profesores.list_"))
+    return render_template("profesores_edit.html", profesor=profesor)
+
+@profesores_bp.route("/delete/<int:id>", methods=["POST"])
+def delete(id):
+    delete_profesor(id)
+    return redirect(url_for("profesores.list_"))

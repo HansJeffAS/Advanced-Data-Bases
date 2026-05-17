@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Editar Asignatura — MVC labo2{% endblock %}
+{% block content %}
+  <h1>Editar Asignatura</h1>
+  <form action="{{ url_for('asignaturas.edit', id=asignatura.id) }}" method="POST" style="margin-bottom: 20px;">
+    <input type="text" name="nombre" value="{{ asignatura.name }}" required>
+    <select name="profesor_id" required>
+        <option value="">Seleccione un profesor</option>
+        {% for profe in profesores %}
+        <option value="{{ profe.id }}" {% if profe.id == asignatura.id_profesor %}selected{% endif %}>{{ profe.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{{ url_for('asignaturas.list_') }}">Volver</a>
+{% endblock %}

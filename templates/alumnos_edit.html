@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Editar Alumno — MVC labo2{% endblock %}
+{% block content %}
+  <h1>Editar Alumno</h1>
+  <form action="{{ url_for('alumnos.edit', id=alumno.id) }}" method="POST" style="margin-bottom: 20px;">
+    <input type="text" name="nombre" value="{{ alumno.name }}" required>
+    <input type="email" name="email" value="{{ alumno.email }}" required>
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{{ url_for('alumnos.list_') }}">Volver</a>
+{% endblock %}

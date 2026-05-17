@@ -5,9 +5,27 @@
   <div style="margin-bottom: 20px;">
       <a href="{{ url_for('alumnos.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
   </div>
+
+  <h3>Agregar nuevo alumno</h3>
+  <form action="{{ url_for('alumnos.add') }}" method="POST" style="margin-bottom: 20px;">
+    <input type="text" name="nombre" placeholder="Nombre" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <button type="submit">Agregar</button>
+  </form>
+
   <ul class="list">
     {% for alumno in alumnos %}
-    <li>{{ alumno.id }} — {{ alumno.name }} — {{ alumno.email }}</li>
+    <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
+        <span>{{ alumno.id }} — {{ alumno.name }} — {{ alumno.email }}</span>
+        <span style="margin-left: 20px;">
+            <a href="{{ url_for('alumnos.edit', id=alumno.id) }}">
+                <button type="button">Modificar</button>
+            </a>
+            <form action="{{ url_for('alumnos.delete', id=alumno.id) }}" method="POST" style="display:inline;">
+                <button type="submit" onclick="return confirm('¿Seguro que deseas borrar este alumno?');">Borrar</button>
+            </form>
+        </span>
+    </li>
     {% else %}
     <li class="empty">No hay alumnos.</li>
     {% endfor %}
