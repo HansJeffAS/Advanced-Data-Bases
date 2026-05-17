@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Asignaturas — MVC labo2{% endblock %}
+{% block content %}
+  <h1>Asignaturas</h1>
+  <div style="margin-bottom: 20px;">
+      <a href="{{ url_for('asignaturas.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
+  </div>
+  <ul class="list">
+    {% for asignatura in asignaturas %}
+    <li>{{ asignatura.id }} — {{ asignatura.name }} — {{ asignatura.id_profesor }}</li>
+    {% else %}
+    <li class="empty">No hay Asignaturas.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Profesores — MVC labo2{% endblock %}
+{% block content %}
+  <h1>Profesores</h1>
+  <div style="margin-bottom: 20px;">
+      <a href="{{ url_for('profesores.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
+  </div>
+  <ul class="list">
+    {% for profesor in profesores %}
+    <li>{{ profesor.id }} — {{ profesor.name }} — {{ profesor.email }}</li>
+    {% else %}
+    <li class="empty">No hay Profesores.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

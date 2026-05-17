@@ -1,0 +1,5 @@
+# Recomendado: Python 3.11+ (ideal 3.12)
+
+psycopg[binary,pool]==3.2.2
+Faker==22.6.0
+Flask>=3.0
