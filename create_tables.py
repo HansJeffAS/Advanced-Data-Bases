@@ -41,7 +41,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         alumno_id integer,
         nombre text NOT NULL,
         email_alumno text NOT NULL
@@ -53,7 +52,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         profesor_id integer,
         nombre text NOT NULL,
         email_profesor text NOT NULL
@@ -65,7 +63,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         asignatura_id integer,
         profesor_id integer,
         nombre text NOT NULL
@@ -77,7 +74,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,    
-        -- Columnas de la tabla original (sin restricciones de integridad)
         matricula_id integer,
         asignatura_id integer,
         alumno_id integer,

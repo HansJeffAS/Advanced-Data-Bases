@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import psycopg
+from psycopg import sql
 
 from config import load_config
 
@@ -57,9 +58,16 @@ def get_auditoria_general(tabla: str, modelo: Type[T]) -> list[T]:
     """
     Obtiene registros de auditoría de cualquier tabla.
     """
+    TABLAS_PERMITIDAS = {"alumnos_audit", "profesores_audit", "asignaturas_audit"}
+
+    if tabla not in TABLAS_PERMITIDAS:
+        raise ValueError(f"Tabla no permitida: {tabla}")
+
     with get_connection() as conn:
         with conn.cursor() as cur:
-            query = f"SELECT * FROM {tabla} ORDER BY stamp DESC;"
+            query = sql.SQL("SELECT * FROM {} ORDER BY stamp DESC;").format(
+                sql.Identifier(tabla)
+            )
             cur.execute(query)
             return [modelo(*r) for r in cur.fetchall()]
         
