@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Editar Profesor — MVC labo2{% endblock %}
 {% block content %}
-  <h1>Editar Profesor</h1>
-  <form action="{{ url_for('profesores.edit', id=profesor.id) }}" method="POST" style="margin-bottom: 20px;">
-    <input type="text" name="nombre" value="{{ profesor.name }}" required>
-    <input type="email" name="email" value="{{ profesor.email }}" required>
-    <button type="submit">Guardar Cambios</button>
-  </form>
-  <a href="{{ url_for('profesores.list_') }}">Volver</a>
+<h1>Editar Profesor</h1>
+<form action="{{ url_for('profesores.edit', id=profesor.profesor_id) }}" method="POST" style="margin-bottom: 20px;">
+  <input type="text" name="nombre" value="{{ profesor.nombre }}" required>
+  <input type="email" name="email" value="{{ profesor.email_profesor }}" required>
+  <button type="submit">Guardar Cambios</button>
+</form>
+<a href="{{ url_for('profesores.list_') }}">Volver</a>
 {% endblock %}

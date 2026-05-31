@@ -19,12 +19,10 @@ def list_():
 def auditoria_general():
     search_query = request.args.get('search')
     historial = get_auditoria_general(tabla="alumnos_audit", modelo=AlumnosAudit)
-    titulo = "General"
         
     return render_template(
         "auditoria_alumnos.html",
-        auditoria=historial, 
-        id_profe=titulo
+        auditoria=historial
     )
 
 @alumnos_bp.route("/add", methods=["POST"])
