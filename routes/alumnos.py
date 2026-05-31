@@ -17,7 +17,6 @@ def list_():
 
 @alumnos_bp.route("/auditoria/general")
 def auditoria_general():
-    search_query = request.args.get('search')
     historial = get_auditoria_general(tabla="alumnos_audit", modelo=AlumnosAudit)
         
     return render_template(
