@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request, redirect, url_for
 
+from decimal import Decimal
+
 from models.entities import AsignaturasAudit
 
-from models.db import get_asignaturas, get_auditoria_general, get_auditoria_asignatura, get_profesores, insert_asignatura, update_asignatura, delete_asignatura, get_asignatura
+from models.db import get_asignaturas, get_auditoria_general, get_auditoria_por_id, get_profesores, insert_asignatura, update_asignatura, delete_asignatura, get_asignatura
 
 asignaturas_bp = Blueprint("asignaturas", __name__, url_prefix="/asignaturas")
 
@@ -27,7 +29,13 @@ def auditoria_general():
 
     # Caso B: El usuario escribió un número (Búsqueda válida)
     elif search_query.isdigit():
-        historial = get_auditoria_asignatura(search_query)
+        # Llamamos a la función genérica pasándole los datos de Alumnos
+        historial = get_auditoria_por_id(
+            tabla="asignaturas_audit", 
+            columna_id="asignatura_id", 
+            valor_id=search_query, 
+            modelo=AsignaturasAudit
+        )
         titulo = f"Filtrado por ID: {search_query}"
 
     # Caso C: El usuario escribió letras o símbolos (Búsqueda inválida)
@@ -45,13 +53,16 @@ def auditoria_general():
 def add():
     nombre = request.form.get("nombre")
     profesor_id = request.form.get("profesor_id")
+    dinero = request.form.get("dinero")
+    dinero_final = Decimal(dinero)
+
     if profesor_id:
         profesor_id = int(profesor_id)
     else:
         profesor_id = None
         
     if nombre:
-        insert_asignatura(nombre, profesor_id)
+        insert_asignatura(nombre, profesor_id, dinero_final)
     return redirect(url_for("asignaturas.list_"))
 
 @asignaturas_bp.route("/edit/<int:id>", methods=["GET", "POST"])

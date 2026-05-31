@@ -58,6 +58,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.25rem;
+  width: 850px;
 }
 
 .list {

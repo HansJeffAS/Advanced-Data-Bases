@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Historial del Alumno ID: {{ id_alumno }}</h1>
+  <h1>Historial {{ id_alumno }}</h1>
   <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
     <form action="{{ url_for('alumnos.auditoria_general') }}" method="GET" style="display: flex; gap: 5px;">
         <input type="text" name="search" placeholder="Ingresar ID exacto del alumno..."
@@ -23,7 +23,7 @@
         <b>{{ reg.stamp }}</b> | 
         Operación: {{ reg.operation }} | 
         Modificado por: {{ reg.userid }} | 
-        Datos: {{ reg.nombre }} ({{ reg.email_alumno }})
+        Datos: {{ reg.nombre }} — ({{ reg.email_alumno }}) — {{reg.dinero}}
       </li>
     {% else %}
       <li>No hay registros en la auditoría.</li>

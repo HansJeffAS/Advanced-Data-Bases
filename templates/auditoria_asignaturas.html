@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Historial de la Asignatura ID: {{ id_asignatura }}</h1>
+  <h1>Historial {{ id_asignatura }}</h1>
   <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
     <form action="{{ url_for('asignaturas.auditoria_general') }}" method="GET" style="display: flex; gap: 5px;">
         <input type="text" name="search" placeholder="Ingresar ID exacto de la asignatura..."
@@ -23,7 +23,7 @@
         <b>{{ reg.stamp }}</b> | 
         Operación: {{ reg.operation }} | 
         Modificado por: {{ reg.userid }} | 
-        Codigo de Asignatura: {{ reg.asignatura_id }} | Codigo de Profesor: {{ reg.profesor_id }} | Asignatura: {{reg.nombre}}
+        Codigo de Asignatura: {{ reg.asignatura_id }} | Codigo de Profesor: {{ reg.profesor_id }} | Asignatura: {{reg.nombre}} | Costo: {{reg.cost}} | Cupo Max: {{reg.max_capacity}}
       </li>
     {% else %}
       <li>No hay registros en la auditoría.</li>

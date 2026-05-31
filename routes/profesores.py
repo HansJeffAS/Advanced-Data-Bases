@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 
 from models.entities import ProfesoresAudit
 
-from models.db import get_profesores, get_auditoria_general, get_auditoria_profesor, insert_profesor, update_profesor, delete_profesor, get_profesor
+from models.db import get_profesores, get_auditoria_general, get_auditoria_por_id, insert_profesor, update_profesor, delete_profesor, get_profesor
 
 profesores_bp = Blueprint("profesores", __name__, url_prefix="/profesores")
 
@@ -25,7 +25,13 @@ def auditoria_general():
 
     # Caso B: El usuario escribió un número (Búsqueda válida)
     elif search_query.isdigit():
-        historial = get_auditoria_profesor(search_query)
+        # Llamamos a la función genérica pasándole los datos de Alumnos
+        historial = get_auditoria_por_id(
+            tabla="profesores_audit", 
+            columna_id="profesor_id", 
+            valor_id=search_query, 
+            modelo=ProfesoresAudit
+        )
         titulo = f"Filtrado por ID: {search_query}"
 
     # Caso C: El usuario escribió letras o símbolos (Búsqueda inválida)

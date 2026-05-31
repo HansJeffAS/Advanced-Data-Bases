@@ -7,9 +7,7 @@ from models.db import (
     get_asignaturas,
     get_matriculas,
     get_auditoria_general,
-    get_auditoria_alumno,
-    get_auditoria_profesor,
-    get_auditoria_asignatura
+    get_auditoria_por_id
 )
 from models.entities import Alumnos, Profesores, Asignaturas, Matriculas, AlumnosAudit, ProfesoresAudit, AsignaturasAudit
 
@@ -27,7 +25,5 @@ __all__ = [
     "get_asignaturas",
     "get_matriculas",
     "get_auditoria_general",
-    "get_auditoria_alumno",
-    "get_auditoria_profesor",
-    "get_auditoria_asignatura"
+    "get_auditoria_por_id"
 ]

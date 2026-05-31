@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from dataclasses import dataclass
 
 
@@ -9,7 +11,7 @@ class Alumnos:
     id: int
     name: str
     email: str
-
+    money: Decimal
 
 @dataclass(frozen=True)
 class Profesores:
@@ -23,6 +25,8 @@ class Asignaturas:
     id: int
     name: str
     id_profesor: int
+    cost: Decimal
+    max_capacity: int
 
 @dataclass(frozen=True)
 class Matriculas:
@@ -36,11 +40,12 @@ class Matriculas:
 class AlumnosAudit:
     audit_id: int
     operation: str
-    stamp: str  # Tambien podemos usar datedatetime
+    stamp: str  # Tambien podemos usar datetime
     userid: str
     alumno_id: int
     nombre: str
     email_alumno: str
+    dinero: Decimal
 
 @dataclass(frozen=True)
 class ProfesoresAudit:
@@ -61,3 +66,5 @@ class AsignaturasAudit:
     asignatura_id: int
     profesor_id: int
     nombre: str
+    cost: Decimal
+    max_capacity: int
