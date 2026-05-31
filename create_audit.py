@@ -4,7 +4,6 @@ import psycopg
 
 from config import load_config
 
-# Añadimos el DROP al inicio de la secuencia de comandos
 DDL = (
     "DROP TRIGGER IF EXISTS alumnos_audit ON alumnos;",
     "DROP TRIGGER IF EXISTS profesores_audit ON profesores;",
@@ -108,7 +107,6 @@ def create_functions() -> None:
             with conn.cursor() as cur:
                 for stmt in DDL:
                     cur.execute(stmt)
-                # Es buena práctica hacer commit explícito si no usas autocommit
                 conn.commit() 
         print("Funciones creadas (Drop + Create).")
     except Exception as e:
