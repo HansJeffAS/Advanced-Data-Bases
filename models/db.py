@@ -25,7 +25,7 @@ def get_alumnos() -> list[Alumnos]:
             cur.execute(
                 "SELECT alumno_id, nombre, email_alumno FROM alumnos ORDER BY alumno_id;"
             )
-            return [Alumnos(id=r[0], name=r[1], email=r[2]) for r in cur.fetchall()]
+            return [Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2]) for r in cur.fetchall()]
 
 def get_profesores() -> list[Profesores]:
     with get_connection() as conn:
@@ -33,7 +33,7 @@ def get_profesores() -> list[Profesores]:
             cur.execute(
                 "SELECT profesor_id, nombre, email_profesor FROM profesores ORDER BY profesor_id;"
             )
-            return [Profesores(id=r[0], name=r[1], email=r[2]) for r in cur.fetchall()]
+            return [Profesores(profesor_id=r[0], nombre=r[1], email_profesor=r[2]) for r in cur.fetchall()]
         
 def get_asignaturas() -> list[Asignaturas]:
     with get_connection() as conn:
@@ -41,7 +41,7 @@ def get_asignaturas() -> list[Asignaturas]:
             cur.execute(
                 "SELECT asignatura_id, nombre, profesor_id FROM asignaturas ORDER BY asignatura_id;"
             )
-            return [Asignaturas(id=r[0], name=r[1], id_profesor=r[2]) for r in cur.fetchall()]
+            return [Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1]) for r in cur.fetchall()]
         
 def get_matriculas() -> list[Matriculas]:
     with get_connection() as conn:
@@ -49,7 +49,7 @@ def get_matriculas() -> list[Matriculas]:
             cur.execute(
                 "SELECT matricula_id, alumno_id, asignatura_id, fecha_matricula FROM matriculas ORDER BY matricula_id;"
             )
-            return [Matriculas(id=r[0], alumno_id=r[1], asignatura_id=r[2], fecha=r[3]) for r in cur.fetchall()]
+            return [Matriculas(matricula_id=r[0], alumno_id=r[1], asignatura_id=r[2], fecha_matricula=r[3]) for r in cur.fetchall()]
 
 # Definimos un tipo genérico T
 T = TypeVar("T")
@@ -145,7 +145,7 @@ def get_alumno(alumno_id: int) -> Alumnos | None:
             cur.execute("SELECT alumno_id, nombre, email_alumno FROM alumnos WHERE alumno_id = %s", (alumno_id,))
             r = cur.fetchone()
             if r:
-                return Alumnos(id=r[0], name=r[1], email=r[2])
+                return Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2])
             return None
 
 def insert_alumno(nombre: str, email_alumno: str) -> None:
@@ -173,7 +173,7 @@ def get_profesor(profesor_id: int) -> Profesores | None:
             cur.execute("SELECT profesor_id, nombre, email_profesor FROM profesores WHERE profesor_id = %s", (profesor_id,))
             r = cur.fetchone()
             if r:
-                return Profesores(id=r[0], name=r[1], email=r[2])
+                return Profesores(profesor_id=r[0], nombre=r[1], email_profesor=r[2])
             return None
 
 def insert_profesor(nombre: str, email_profesor: str) -> None:
@@ -201,7 +201,7 @@ def get_asignatura(asignatura_id: int) -> Asignaturas | None:
             cur.execute("SELECT asignatura_id, nombre, profesor_id FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
             r = cur.fetchone()
             if r:
-                return Asignaturas(id=r[0], name=r[1], id_profesor=r[2])
+                return Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1])
             return None
 
 def insert_asignatura(nombre: str, profesor_id: int | None) -> None:
