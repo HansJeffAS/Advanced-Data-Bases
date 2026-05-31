@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Matriculas — MVC labo2{% endblock %}
 {% block content %}
-  <h1>Matriculas</h1>
-  <ul class="list">
-    {% for matricula in matriculas %}
-    <li>{{ matricula.id }} — {{ matricula.alumno_id }} — {{ matricula.asignatura_id }} — {{ matricula.fecha }}</li>
-    {% else %}
-    <li class="empty">No hay Matriculas.</li>
-    {% endfor %}
-  </ul>
+<h1>Matriculas</h1>
+<ul class="list">
+  {% for matricula in matriculas %}
+  <li>{{ matricula.matricula_id }} — {{ matricula.alumno_id }} — {{ matricula.asignatura_id }} — {{
+    matricula.matricula_id }}</li>
+  {% else %}
+  <li class="empty">No hay Matriculas.</li>
+  {% endfor %}
+</ul>
 {% endblock %}
