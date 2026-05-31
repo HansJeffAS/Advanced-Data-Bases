@@ -12,9 +12,11 @@
   <select name="profesor_id" required>
     <option value="">Seleccione un profesor</option>
     {% for profe in profesores %}
-    <option value="{{ profe.id }}">{{ profe.name }}</option>
+    <option value="{{ profe.profesor_id }}">{{ profe.nombre }}</option>
     {% endfor %}
   </select>
+  <input type="number" name="precio" placeholder="Precio (€)" min="0" step="0.01" value="0.00" required>
+  <input type="number" name="max_alumnos" placeholder="Máx. alumnos" min="1" value="30" required>
   <button type="submit">Agregar</button>
 </form>
 
@@ -22,7 +24,8 @@
   {% for asignatura in asignaturas %}
   <li
     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
-    <span>{{ asignatura.asignatura_id }} — {{ asignatura.nombre }} — ID Profesor: {{ asignatura.profesor_id }}</span>
+    <span>{{ asignatura.asignatura_id }} — {{ asignatura.nombre }} — ID Profesor: {{ asignatura.profesor_id }} —
+      <strong>{{ "%.2f"|format(asignatura.precio) }}€</strong> — Máx: {{ asignatura.max_alumnos }}</span>
     <span style="margin-left: 20px;">
       <a href="{{ url_for('asignaturas.edit', id=asignatura.asignatura_id) }}">
         <button type="button">Modificar</button>

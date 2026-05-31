@@ -63,13 +63,13 @@ def preview():
     if alumno_id_str and alumno_id_str.isdigit():
         alumno = get_alumno(int(alumno_id_str))
         if alumno:
-            data["alumno_nombre"] = alumno.name
+            data["alumno_nombre"] = alumno.nombre
             data["alumno_saldo"] = float(alumno.saldo)
 
     if asignatura_id_str and asignatura_id_str.isdigit():
         asignatura = get_asignatura(int(asignatura_id_str))
         if asignatura:
-            data["asignatura_nombre"] = asignatura.name
+            data["asignatura_nombre"] = asignatura.nombre
             data["asignatura_precio"] = float(asignatura.precio)
             data["asignatura_max"] = asignatura.max_alumnos
 

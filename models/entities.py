@@ -9,6 +9,7 @@ class Alumnos:
     alumno_id: int
     nombre: str
     email_alumno: str
+    saldo: Decimal
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,8 @@ class Asignaturas:
     asignatura_id: int
     profesor_id: int
     nombre: str
+    precio: Decimal
+    max_alumnos: int
 
 @dataclass(frozen=True)
 class Matriculas:

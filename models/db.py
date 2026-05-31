@@ -26,7 +26,7 @@ def get_alumnos() -> list[Alumnos]:
             cur.execute(
                 "SELECT alumno_id, nombre, email_alumno, saldo FROM alumnos ORDER BY alumno_id;"
             )
-            return [Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2]) for r in cur.fetchall()]
+            return [Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2], saldo=r[3]) for r in cur.fetchall()]
 
 def get_profesores() -> list[Profesores]:
     with get_connection() as conn:
@@ -42,7 +42,7 @@ def get_asignaturas() -> list[Asignaturas]:
             cur.execute(
                 "SELECT asignatura_id, nombre, profesor_id, precio, max_alumnos FROM asignaturas ORDER BY asignatura_id;"
             )
-            return [Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1]) for r in cur.fetchall()]
+            return [Asignaturas(asignatura_id=r[0], nombre=r[1], profesor_id=r[2], precio=r[3], max_alumnos=r[4]) for r in cur.fetchall()]
         
 def get_matriculas() -> list[Matriculas]:
     with get_connection() as conn:
@@ -141,7 +141,7 @@ def get_alumno(alumno_id: int) -> Alumnos | None:
             cur.execute("SELECT alumno_id, nombre, email_alumno, saldo FROM alumnos WHERE alumno_id = %s", (alumno_id,))
             r = cur.fetchone()
             if r:
-                return Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2])
+                return Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2], saldo=r[3])
             return None
 
 def insert_alumno(nombre: str, email_alumno: str, saldo: float = 0.0) -> None:
@@ -195,7 +195,7 @@ def get_asignatura(asignatura_id: int) -> Asignaturas | None:
             cur.execute("SELECT asignatura_id, nombre, profesor_id, precio, max_alumnos FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
             r = cur.fetchone()
             if r:
-                return Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1])
+                return Asignaturas(asignatura_id=r[0], nombre=r[1], profesor_id=r[2], precio=r[3], max_alumnos=r[4])
             return None
 
 def insert_asignatura(nombre: str, profesor_id: int | None, precio: float = 0.0, max_alumnos: int = 30) -> None:
@@ -216,22 +216,77 @@ def delete_asignatura(asignatura_id: int) -> None:
             cur.execute("DELETE FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
         conn.commit()
 
-# --- Matriculación transaccional ---
 def matricular_alumno_transaccional(alumno_id: int, asignatura_id: int) -> dict:
-    """
-    Llama a la función PL/pgSQL matricular_alumno que gestiona toda la lógica
-    transaccional: verificación de plazas, saldo y descuento dentro de una
-    única transacción atómica en el servidor.
-    """
     with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT matricular_alumno(%s, %s);",
-                (alumno_id, asignatura_id)
-            )
-            resultado = cur.fetchone()[0]
-        conn.commit()
-    return resultado
+        conn.autocommit = False
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT alumno_id, nombre, saldo FROM alumnos WHERE alumno_id = %s FOR UPDATE",
+                    (alumno_id,)
+                )
+                fila_alumno = cur.fetchone()
+                if fila_alumno is None:
+                    conn.rollback()
+                    return {"ok": False, "error": "Alumno no encontrado"}
+
+                _, nombre_alumno, saldo_alumno = fila_alumno
+
+                cur.execute(
+                    "SELECT asignatura_id, nombre, precio, max_alumnos FROM asignaturas WHERE asignatura_id = %s FOR UPDATE",
+                    (asignatura_id,)
+                )
+                fila_asig = cur.fetchone()
+                if fila_asig is None:
+                    conn.rollback()
+                    return {"ok": False, "error": "Asignatura no encontrada"}
+
+                _, nombre_asig, precio, max_alumnos = fila_asig
+
+                cur.execute(
+                    "SELECT 1 FROM matriculas WHERE alumno_id = %s AND asignatura_id = %s",
+                    (alumno_id, asignatura_id)
+                )
+                if cur.fetchone() is not None:
+                    conn.rollback()
+                    return {"ok": False, "error": "El alumno ya está matriculado en esta asignatura"}
+
+                cur.execute(
+                    "SELECT COUNT(*) FROM matriculas WHERE asignatura_id = %s",
+                    (asignatura_id,)
+                )
+                inscritos = cur.fetchone()[0]
+                if inscritos >= max_alumnos:
+                    conn.rollback()
+                    return {"ok": False, "error": f"No quedan plazas disponibles (límite: {max_alumnos})"}
+
+                if saldo_alumno < precio:
+                    conn.rollback()
+                    return {"ok": False, "error": f"Saldo insuficiente (tienes {saldo_alumno}€, necesitas {precio}€)"}
+
+                cur.execute(
+                    "UPDATE alumnos SET saldo = saldo - %s WHERE alumno_id = %s",
+                    (precio, alumno_id)
+                )
+                cur.execute(
+                    "INSERT INTO matriculas (alumno_id, asignatura_id) VALUES (%s, %s)",
+                    (alumno_id, asignatura_id)
+                )
+
+            conn.commit()
+            return {
+                "ok": True,
+                "mensaje": "Matrícula realizada con éxito",
+                "alumno": nombre_alumno,
+                "asignatura": nombre_asig,
+                "precio": float(precio),
+                "saldo_restante": float(saldo_alumno - precio),
+                "plazas_restantes": max_alumnos - inscritos - 1,
+            }
+
+        except Exception as e:
+            conn.rollback()
+            return {"ok": False, "error": f"Error interno: {e}"}
 
 def get_asignaturas_con_plazas() -> list[dict]:
     """

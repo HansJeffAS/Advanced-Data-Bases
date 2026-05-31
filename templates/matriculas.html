@@ -1,13 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Matrículas — MVC labo2{% endblock %}
 {% block content %}
-<h1>Matriculas</h1>
+<h1>Proceso de Matriculación</h1>
+
+<h3>Nueva Matrícula</h3>
+<form id="form-matricula" action="{{ url_for('matriculas.matricular') }}" method="POST" style="margin-bottom: 20px;">
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+    <div>
+      <label for="alumno_id">Alumno</label><br>
+      <select id="alumno_id" name="alumno_id" required>
+        <option value="">— Seleccionar —</option>
+        {% for alumno in alumnos %}
+        <option value="{{ alumno.alumno_id }}" {% if alumno_sel==alumno.alumno_id %}selected{% endif %}>
+          {{ alumno.alumno_id }} · {{ alumno.nombre }} ({{ "%.2f"|format(alumno.saldo) }}€)
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="asignatura_id">Asignatura</label><br>
+      <select id="asignatura_id" name="asignatura_id" required>
+        <option value="">— Seleccionar —</option>
+        {% for asig in asignaturas %}
+        <option value="{{ asig.asignatura_id }}" {% if asignatura_sel==asig.asignatura_id %}selected{% endif %}>
+          {{ asig.asignatura_id }} · {{ asig.nombre }} ({{ "%.2f"|format(asig.precio) }}€ · Máx: {{ asig.max_alumnos }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit" id="btn-matricular">Matricular</button>
+    </div>
+  </div>
+</form>
+
+{% if resultado %}
+{% if resultado.ok %}
+<div class="resultado resultado-ok">
+  <strong>✓ {{ resultado.mensaje }}</strong><br>
+  Alumno: <em>{{ resultado.alumno }}</em> → Asignatura: <em>{{ resultado.asignatura }}</em><br>
+  Precio descontado: <strong>{{ "%.2f"|format(resultado.precio) }}€</strong> ·
+  Saldo restante: <strong>{{ "%.2f"|format(resultado.saldo_restante) }}€</strong> ·
+  Plazas libres tras matrícula: <strong>{{ resultado.plazas_restantes }}</strong>
+</div>
+{% else %}
+<div class="resultado resultado-error">
+  <strong>✗ Error en la matriculación</strong><br>
+  {{ resultado.error }}
+</div>
+{% endif %}
+{% endif %}
+
+<hr style="border-color: var(--border); margin: 1.5rem 0;">
+
+<h3>Matrículas registradas</h3>
 <ul class="list">
   {% for matricula in matriculas %}
-  <li>{{ matricula.matricula_id }} — {{ matricula.alumno_id }} — {{ matricula.asignatura_id }} — {{
-    matricula.matricula_id }}</li>
+  <li>{{ matricula.matricula_id }} — Alumno: {{ matricula.alumno_id }} — Asignatura: {{ matricula.asignatura_id }} — {{
+    matricula.fecha_matricula }}</li>
   {% else %}
-  <li class="empty">No hay Matriculas.</li>
+  <li class="empty">No hay matrículas.</li>
   {% endfor %}
 </ul>
 {% endblock %}

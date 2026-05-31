@@ -5,6 +5,7 @@
 <form action="{{ url_for('alumnos.edit', id=alumno.alumno_id) }}" method="POST" style="margin-bottom: 20px;">
   <input type="text" name="nombre" value="{{ alumno.nombre }}" required>
   <input type="email" name="email" value="{{ alumno.email_alumno }}" required>
+  <input type="number" name="saldo" value="{{ alumno.saldo }}" min="0" step="0.01" required placeholder="Saldo (€)">
   <button type="submit">Guardar Cambios</button>
 </form>
 <a href="{{ url_for('alumnos.list_') }}">Volver</a>
