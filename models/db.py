@@ -318,3 +318,17 @@ def get_asignaturas_con_plazas() -> list[dict]:
                 }
                 for r in cur.fetchall()
             ]
+def get_vista_matriculas() -> list[dict]:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT nombre_alumno, nombre_profesor, nombre_asignatura FROM vista_matriculas_detalle;"
+            )
+            return [
+                {
+                    "nombre_alumno": r[0],
+                    "nombre_profesor": r[1],
+                    "nombre_asignatura": r[2],
+                }
+                for r in cur.fetchall()
+            ]

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Vista Matrículas — MVC labo2{% endblock %}
+{% block content %}
+<h1>Vista de Base de Datos</h1>
+
+<table class="vista-table">
+  <thead>
+    <tr>
+      <th>Nombre Alumno</th>
+      <th>Nombre Profesor</th>
+      <th>Nombre Asignatura</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for fila in filas %}
+    <tr>
+      <td>{{ fila.nombre_alumno }}</td>
+      <td>{{ fila.nombre_profesor if fila.nombre_profesor else '—' }}</td>
+      <td>{{ fila.nombre_asignatura }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="3" class="empty">No hay matrículas registradas.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

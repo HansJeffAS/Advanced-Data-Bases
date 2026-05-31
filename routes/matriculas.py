@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 
-from models.db import get_matriculas, get_alumnos, get_asignaturas, matricular_alumno_transaccional, get_alumno, get_asignatura
+from models.db import get_matriculas, get_alumnos, get_asignaturas, matricular_alumno_transaccional, get_alumno, get_asignatura, get_vista_matriculas
 
 matriculas_bp = Blueprint("matriculas", __name__, url_prefix="/matriculas")
 
@@ -74,3 +74,8 @@ def preview():
             data["asignatura_max"] = asignatura.max_alumnos
 
     return jsonify(data)
+
+@matriculas_bp.route("/vista")
+def vista():
+    filas = get_vista_matriculas()
+    return render_template("matriculas_vista.html", filas=filas)

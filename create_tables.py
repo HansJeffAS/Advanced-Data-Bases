@@ -85,6 +85,19 @@ DDL = (
         alumno_id integer,
         fecha_matricula timestamp
     )
+    """,
+    "DROP VIEW IF EXISTS vista_matriculas_detalle;",
+    """
+    CREATE VIEW vista_matriculas_detalle AS
+    SELECT
+        al.nombre        AS nombre_alumno,
+        pr.nombre        AS nombre_profesor,
+        asig.nombre      AS nombre_asignatura
+    FROM matriculas m
+    JOIN alumnos      al   ON al.alumno_id       = m.alumno_id
+    JOIN asignaturas  asig ON asig.asignatura_id = m.asignatura_id
+    LEFT JOIN profesores pr ON pr.profesor_id    = asig.profesor_id
+    ORDER BY al.nombre, asig.nombre;
     """
 )
 
