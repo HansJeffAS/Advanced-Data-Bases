@@ -1,33 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Historial del Alumno ID: {{ id_alumno }}</h1>
-  <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-    <form action="{{ url_for('alumnos.auditoria_general') }}" method="GET" style="display: flex; gap: 5px;">
-        <input type="text" name="search" placeholder="Ingresar ID exacto del alumno..."
-          value="{{ request.args.get('search', '') }}"
-          style="padding: 5px; width: 210px; border-radius: 4px; background: #2b2b2b; color: white; border: 1px solid #444;">
-        <button type="submit">🔍 Buscar por ID</button>
-    </form>
-    {% if request.args.get('search') %}
-      <a href="{{ url_for('alumnos.auditoria_general') }}" style="color: #ff6b6b; font-size: 0.9em;">✖ Quitar filtro</a>
-    {% endif %}
-  </div>
-  {% if request.args.get('search') and not auditoria %}
-      <div style="color: #ff6b6b; margin-top: 10px;">
-      ⚠️ Error: Por favor, ingrese un número de ID válido.
-      </div>
-  {% endif %}
-  <ul class="list">
-    {% for reg in auditoria %}
-      <li>
-        <b>{{ reg.stamp }}</b> | 
-        Operación: {{ reg.operation }} | 
-        Modificado por: {{ reg.userid }} | 
-        Datos: {{ reg.nombre }} ({{ reg.email_alumno }})
-      </li>
-    {% else %}
-      <li>No hay registros en la auditoría.</li>
-    {% endfor %}
-  </ul>
-  <a href="{{ url_for('alumnos.list_') }}">Volver a la lista</a>
+<h1>Auditoria de Alumnos</h1>
+<ul class="list">
+  {% for reg in auditoria %}
+  <li>
+    <b>{{ reg.stamp }}</b> |
+    Operación: {{ reg.operation }} |
+    Modificado por: {{ reg.userid }} |
+    Datos: {{ reg.nombre }} ({{ reg.email_alumno }})
+  </li>
+  {% else %}
+  <li>No hay registros en la auditoría.</li>
+  {% endfor %}
+</ul>
+<a href="{{ url_for('alumnos.list_') }}">Volver a la lista</a>
 {% endblock %}

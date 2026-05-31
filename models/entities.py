@@ -6,41 +6,35 @@ from decimal import Decimal
 
 @dataclass(frozen=True)
 class Alumnos:
-    """Alumno matriculado"""
-    id: int
-    name: str
-    email: str
-    saldo: Decimal
+    alumno_id: int
+    nombre: str
+    email_alumno: str
 
 
 @dataclass(frozen=True)
 class Profesores:
-    """Profesores"""
-    id: int
-    name: str
-    email: str
+    profesor_id: int
+    nombre: str
+    email_profesor: str
    
 @dataclass(frozen=True)
 class Asignaturas:
-    id: int
-    name: str
-    id_profesor: int
-    precio: Decimal
-    max_alumnos: int
+    asignatura_id: int
+    profesor_id: int
+    nombre: str
 
 @dataclass(frozen=True)
 class Matriculas:
-    id: int
-    alumno_id: int
+    matricula_id: int
     asignatura_id: int
-    fecha: str
+    alumno_id: int
+    fecha_matricula: str
 
-# Estructuras para los históricos de auditorías
 @dataclass(frozen=True)
 class AlumnosAudit:
     audit_id: int
     operation: str
-    stamp: str  # Tambien podemos usar datedatetime
+    stamp: str
     userid: str
     alumno_id: int
     nombre: str
@@ -51,7 +45,7 @@ class AlumnosAudit:
 class ProfesoresAudit:
     audit_id: int
     operation: str
-    stamp: str  # Tambien podemos usar datedatetime
+    stamp: str
     userid: str
     profesor_id: int
     nombre: str
@@ -61,7 +55,7 @@ class ProfesoresAudit:
 class AsignaturasAudit:
     audit_id: int
     operation: str
-    stamp: str  # Tambien podemos usar datedatetime
+    stamp: str
     userid: str
     asignatura_id: int
     profesor_id: int

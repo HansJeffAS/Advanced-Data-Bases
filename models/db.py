@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import psycopg
+from psycopg import sql
 
 from config import load_config
 
@@ -25,7 +26,7 @@ def get_alumnos() -> list[Alumnos]:
             cur.execute(
                 "SELECT alumno_id, nombre, email_alumno, saldo FROM alumnos ORDER BY alumno_id;"
             )
-            return [Alumnos(id=r[0], name=r[1], email=r[2], saldo=r[3]) for r in cur.fetchall()]
+            return [Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2]) for r in cur.fetchall()]
 
 def get_profesores() -> list[Profesores]:
     with get_connection() as conn:
@@ -33,7 +34,7 @@ def get_profesores() -> list[Profesores]:
             cur.execute(
                 "SELECT profesor_id, nombre, email_profesor FROM profesores ORDER BY profesor_id;"
             )
-            return [Profesores(id=r[0], name=r[1], email=r[2]) for r in cur.fetchall()]
+            return [Profesores(profesor_id=r[0], nombre=r[1], email_profesor=r[2]) for r in cur.fetchall()]
         
 def get_asignaturas() -> list[Asignaturas]:
     with get_connection() as conn:
@@ -41,7 +42,7 @@ def get_asignaturas() -> list[Asignaturas]:
             cur.execute(
                 "SELECT asignatura_id, nombre, profesor_id, precio, max_alumnos FROM asignaturas ORDER BY asignatura_id;"
             )
-            return [Asignaturas(id=r[0], name=r[1], id_profesor=r[2], precio=r[3], max_alumnos=r[4]) for r in cur.fetchall()]
+            return [Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1]) for r in cur.fetchall()]
         
 def get_matriculas() -> list[Matriculas]:
     with get_connection() as conn:
@@ -49,27 +50,30 @@ def get_matriculas() -> list[Matriculas]:
             cur.execute(
                 "SELECT matricula_id, alumno_id, asignatura_id, fecha_matricula FROM matriculas ORDER BY matricula_id;"
             )
-            return [Matriculas(id=r[0], alumno_id=r[1], asignatura_id=r[2], fecha=r[3]) for r in cur.fetchall()]
+            return [Matriculas(matricula_id=r[0], alumno_id=r[1], asignatura_id=r[2], fecha_matricula=r[3]) for r in cur.fetchall()]
 
-# Definimos un tipo genérico T
 T = TypeVar("T")
 
 def get_auditoria_general(tabla: str, modelo: Type[T]) -> list[T]:
     """
     Obtiene registros de auditoría de cualquier tabla.
     """
+    TABLAS_PERMITIDAS = {"alumnos_audit", "profesores_audit", "asignaturas_audit"}
+
+    if tabla not in TABLAS_PERMITIDAS:
+        raise ValueError(f"Tabla no permitida: {tabla}")
+
     with get_connection() as conn:
         with conn.cursor() as cur:
-            query = f"SELECT * FROM {tabla} ORDER BY stamp DESC;"
+            query = sql.SQL("SELECT * FROM {} ORDER BY stamp DESC;").format(
+                sql.Identifier(tabla)
+            )
             cur.execute(query)
-            # Usamos el desempaquetado de argumentos (*r) para que la clase 
-            # se encargue de asignar los valores a sus atributos.
             return [modelo(*r) for r in cur.fetchall()]
         
 def get_auditoria_alumno(alumno: str) -> list[AlumnosAudit]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            # Solo filtramos por profesor_id usando el comparador de igualdad (=)
             query = """
                 SELECT audit_id, operation, stamp, userid, alumno_id, nombre, email_alumno, saldo
                 FROM alumnos_audit 
@@ -77,10 +81,8 @@ def get_auditoria_alumno(alumno: str) -> list[AlumnosAudit]:
                 ORDER BY stamp DESC;
             """
             try:
-                # Convertimos a int para asegurar que sea una búsqueda numérica
                 cur.execute(query, (int(alumno),))
             except ValueError:
-                # Si el usuario escribe letras en lugar de números, retornamos lista vacía
                 return []
             
             return [
@@ -93,7 +95,6 @@ def get_auditoria_alumno(alumno: str) -> list[AlumnosAudit]:
 def get_auditoria_profesor(profesor: str) -> list[ProfesoresAudit]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            # Solo filtramos por profesor_id usando el comparador de igualdad (=)
             query = """
                 SELECT audit_id, operation, stamp, userid, profesor_id, nombre, email_profesor 
                 FROM profesores_audit 
@@ -101,10 +102,8 @@ def get_auditoria_profesor(profesor: str) -> list[ProfesoresAudit]:
                 ORDER BY stamp DESC;
             """
             try:
-                # Convertimos a int para asegurar que sea una búsqueda numérica
                 cur.execute(query, (int(profesor),))
             except ValueError:
-                # Si el usuario escribe letras en lugar de números, retornamos lista vacía
                 return []
             
             return [
@@ -117,7 +116,6 @@ def get_auditoria_profesor(profesor: str) -> list[ProfesoresAudit]:
 def get_auditoria_asignatura(asignatura: str) -> list[AsignaturasAudit]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            # Solo filtramos por profesor_id usando el comparador de igualdad (=)
             query = """
                 SELECT audit_id, operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos
                 FROM asignaturas_audit 
@@ -125,10 +123,8 @@ def get_auditoria_asignatura(asignatura: str) -> list[AsignaturasAudit]:
                 ORDER BY stamp DESC;
             """
             try:
-                # Convertimos a int para asegurar que sea una búsqueda numérica
                 cur.execute(query, (int(asignatura),))
             except ValueError:
-                # Si el usuario escribe letras en lugar de números, retornamos lista vacía
                 return []
             
             return [
@@ -139,14 +135,13 @@ def get_auditoria_asignatura(asignatura: str) -> list[AsignaturasAudit]:
                 ) for r in cur.fetchall()
             ]
 
-# --- CRUD Alumnos ---
 def get_alumno(alumno_id: int) -> Alumnos | None:
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT alumno_id, nombre, email_alumno, saldo FROM alumnos WHERE alumno_id = %s", (alumno_id,))
             r = cur.fetchone()
             if r:
-                return Alumnos(id=r[0], name=r[1], email=r[2], saldo=r[3])
+                return Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2])
             return None
 
 def insert_alumno(nombre: str, email_alumno: str, saldo: float = 0.0) -> None:
@@ -167,14 +162,13 @@ def delete_alumno(alumno_id: int) -> None:
             cur.execute("DELETE FROM alumnos WHERE alumno_id = %s", (alumno_id,))
         conn.commit()
 
-# --- CRUD Profesores ---
 def get_profesor(profesor_id: int) -> Profesores | None:
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT profesor_id, nombre, email_profesor FROM profesores WHERE profesor_id = %s", (profesor_id,))
             r = cur.fetchone()
             if r:
-                return Profesores(id=r[0], name=r[1], email=r[2])
+                return Profesores(profesor_id=r[0], nombre=r[1], email_profesor=r[2])
             return None
 
 def insert_profesor(nombre: str, email_profesor: str) -> None:
@@ -195,14 +189,13 @@ def delete_profesor(profesor_id: int) -> None:
             cur.execute("DELETE FROM profesores WHERE profesor_id = %s", (profesor_id,))
         conn.commit()
 
-# --- CRUD Asignaturas ---
 def get_asignatura(asignatura_id: int) -> Asignaturas | None:
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT asignatura_id, nombre, profesor_id, precio, max_alumnos FROM asignaturas WHERE asignatura_id = %s", (asignatura_id,))
             r = cur.fetchone()
             if r:
-                return Asignaturas(id=r[0], name=r[1], id_profesor=r[2], precio=r[3], max_alumnos=r[4])
+                return Asignaturas(asignatura_id=r[0], profesor_id=r[2], nombre=r[1])
             return None
 
 def insert_asignatura(nombre: str, profesor_id: int | None, precio: float = 0.0, max_alumnos: int = 30) -> None:

@@ -4,7 +4,6 @@ import psycopg
 
 from config import load_config
 
-# Añadimos el DROP al inicio de la secuencia de comandos
 DDL = (
     "DROP TABLE IF EXISTS matriculas, alumnos, asignaturas, profesores, alumnos_audit, profesores_audit, asignaturas_audit, matriculas_audit CASCADE;", 
     """
@@ -45,7 +44,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         alumno_id integer,
         nombre text NOT NULL,
         email_alumno text NOT NULL,
@@ -58,7 +56,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         profesor_id integer,
         nombre text NOT NULL,
         email_profesor text NOT NULL
@@ -70,7 +67,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,
-        -- Columnas de la tabla original (sin restricciones de integridad)
         asignatura_id integer,
         profesor_id integer,
         nombre text NOT NULL,
@@ -84,7 +80,6 @@ DDL = (
         operation char(1) NOT NULL,
         stamp timestamp NOT NULL,
         userid text NOT NULL,    
-        -- Columnas de la tabla original (sin restricciones de integridad)
         matricula_id integer,
         asignatura_id integer,
         alumno_id integer,
@@ -100,7 +95,6 @@ def create_tables() -> None:
             with conn.cursor() as cur:
                 for stmt in DDL:
                     cur.execute(stmt)
-                # Es buena práctica hacer commit explícito si no usas autocommit
                 conn.commit() 
         print("Tablas reiniciadas correctamente (Drop + Create).")
     except Exception as e:

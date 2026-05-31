@@ -1,33 +1,34 @@
 {% extends "base.html" %}
 {% block title %}Profesores — MVC labo2{% endblock %}
 {% block content %}
-  <h1>Profesores</h1>
-  <div style="margin-bottom: 20px;">
-      <a href="{{ url_for('profesores.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
-  </div>
+<h1>Profesores</h1>
+<div style="margin-bottom: 20px;">
+  <a href="{{ url_for('profesores.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
+</div>
 
-  <h3>Agregar nuevo profesor</h3>
-  <form action="{{ url_for('profesores.add') }}" method="POST" style="margin-bottom: 20px;">
-    <input type="text" name="nombre" placeholder="Nombre" required>
-    <input type="email" name="email" placeholder="Email" required>
-    <button type="submit">Agregar</button>
-  </form>
+<h3>Agregar nuevo profesor</h3>
+<form action="{{ url_for('profesores.add') }}" method="POST" style="margin-bottom: 20px;">
+  <input type="text" name="nombre" placeholder="Nombre" required>
+  <input type="email" name="email" placeholder="Email" required>
+  <button type="submit">Agregar</button>
+</form>
 
-  <ul class="list">
-    {% for profesor in profesores %}
-    <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
-        <span>{{ profesor.id }} — {{ profesor.name }} — {{ profesor.email }}</span>
-        <span style="margin-left: 20px;">
-            <a href="{{ url_for('profesores.edit', id=profesor.id) }}">
-                <button type="button">Modificar</button>
-            </a>
-            <form action="{{ url_for('profesores.delete', id=profesor.id) }}" method="POST" style="display:inline;">
-                <button type="submit" onclick="return confirm('¿Seguro que deseas borrar este profesor?');">Borrar</button>
-            </form>
-        </span>
-    </li>
-    {% else %}
-    <li class="empty">No hay Profesores.</li>
-    {% endfor %}
-  </ul>
+<ul class="list">
+  {% for profesor in profesores %}
+  <li
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
+    <span>{{ profesor.profesor_id }} — {{ profesor.nombre }} — {{ profesor.email_profesor }}</span>
+    <span style="margin-left: 20px;">
+      <a href="{{ url_for('profesores.edit', id=profesor.profesor_id) }}">
+        <button type="button">Modificar</button>
+      </a>
+      <form action="{{ url_for('profesores.delete', id=profesor.profesor_id) }}" method="POST" style="display:inline;">
+        <button type="submit" onclick="return confirm('¿Seguro que deseas borrar este profesor?');">Borrar</button>
+      </form>
+    </span>
+  </li>
+  {% else %}
+  <li class="empty">No hay Profesores.</li>
+  {% endfor %}
+</ul>
 {% endblock %}
