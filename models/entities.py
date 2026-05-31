@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 
 
 @dataclass(frozen=True)
@@ -9,6 +10,7 @@ class Alumnos:
     id: int
     name: str
     email: str
+    saldo: Decimal
 
 
 @dataclass(frozen=True)
@@ -23,6 +25,8 @@ class Asignaturas:
     id: int
     name: str
     id_profesor: int
+    precio: Decimal
+    max_alumnos: int
 
 @dataclass(frozen=True)
 class Matriculas:
@@ -41,6 +45,7 @@ class AlumnosAudit:
     alumno_id: int
     nombre: str
     email_alumno: str
+    saldo: Decimal
 
 @dataclass(frozen=True)
 class ProfesoresAudit:
@@ -61,3 +66,5 @@ class AsignaturasAudit:
     asignatura_id: int
     profesor_id: int
     nombre: str
+    precio: Decimal
+    max_alumnos: int

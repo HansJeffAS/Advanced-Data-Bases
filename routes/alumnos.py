@@ -43,8 +43,13 @@ def auditoria_general():
 def add():
     nombre = request.form.get("nombre")
     email = request.form.get("email")
+    saldo_str = request.form.get("saldo", "0")
+    try:
+        saldo = float(saldo_str)
+    except ValueError:
+        saldo = 0.0
     if nombre and email:
-        insert_alumno(nombre, email)
+        insert_alumno(nombre, email, saldo)
     return redirect(url_for("alumnos.list_"))
 
 @alumnos_bp.route("/edit/<int:id>", methods=["GET", "POST"])
@@ -52,8 +57,13 @@ def edit(id):
     if request.method == "POST":
         nombre = request.form.get("nombre")
         email = request.form.get("email")
+        saldo_str = request.form.get("saldo", "0")
+        try:
+            saldo = float(saldo_str)
+        except ValueError:
+            saldo = 0.0
         if nombre and email:
-            update_alumno(id, nombre, email)
+            update_alumno(id, nombre, email, saldo)
         return redirect(url_for("alumnos.list_"))
     
     alumno = get_alumno(id)

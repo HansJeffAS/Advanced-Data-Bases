@@ -10,13 +10,14 @@
   <form action="{{ url_for('alumnos.add') }}" method="POST" style="margin-bottom: 20px;">
     <input type="text" name="nombre" placeholder="Nombre" required>
     <input type="email" name="email" placeholder="Email" required>
+    <input type="number" name="saldo" placeholder="Saldo (€)" min="0" step="0.01" value="0.00" required>
     <button type="submit">Agregar</button>
   </form>
 
   <ul class="list">
     {% for alumno in alumnos %}
     <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
-        <span>{{ alumno.id }} — {{ alumno.name }} — {{ alumno.email }}</span>
+        <span>{{ alumno.id }} — {{ alumno.name }} — {{ alumno.email }} — <strong>{{ "%.2f"|format(alumno.saldo) }}€</strong></span>
         <span style="margin-left: 20px;">
             <a href="{{ url_for('alumnos.edit', id=alumno.id) }}">
                 <button type="button">Modificar</button>

@@ -11,7 +11,8 @@ DDL = (
     CREATE TABLE alumnos (
         alumno_id SERIAL PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL,
-        email_alumno VARCHAR(255) NOT NULL
+        email_alumno VARCHAR(255) NOT NULL,
+        saldo NUMERIC(10,2) DEFAULT 0.00 NOT NULL
     )
     """,
     """
@@ -25,7 +26,9 @@ DDL = (
     CREATE TABLE asignaturas (
         asignatura_id SERIAL PRIMARY KEY,
         profesor_id INTEGER REFERENCES profesores(profesor_id) ON DELETE SET NULL,
-        nombre VARCHAR(100) NOT NULL       
+        nombre VARCHAR(100) NOT NULL,
+        precio NUMERIC(10,2) DEFAULT 0.00 NOT NULL,
+        max_alumnos INTEGER DEFAULT 30 NOT NULL
     )
     """,
     """
@@ -45,7 +48,8 @@ DDL = (
         -- Columnas de la tabla original (sin restricciones de integridad)
         alumno_id integer,
         nombre text NOT NULL,
-        email_alumno text NOT NULL
+        email_alumno text NOT NULL,
+        saldo numeric(10,2)
     )
     """,
     """
@@ -69,7 +73,9 @@ DDL = (
         -- Columnas de la tabla original (sin restricciones de integridad)
         asignatura_id integer,
         profesor_id integer,
-        nombre text NOT NULL
+        nombre text NOT NULL,
+        precio numeric(10,2),
+        max_alumnos integer
     )
     """,
     """

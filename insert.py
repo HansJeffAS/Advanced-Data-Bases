@@ -25,7 +25,10 @@ def insert_alumnos():
     for i in range(1, lotes + 1):
         start_time = time.perf_counter()
         # Insertamos lote, usando array_insert=[] para que no se acumulen los datos
-        alumnos = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["name", "email"], seed=123 + i, array_insert=[])
+        alumnos_raw = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["name", "email"], seed=123 + i, array_insert=[])
+
+        # Añadimos saldo aleatorio entre 50 y 1500 €
+        alumnos = [(nombre, email, round(random.uniform(50.0, 1500.0), 2)) for nombre, email in alumnos_raw]
 
         # Se añaden al final del CSV
         with open('temp_data.csv', 'a', newline='', encoding='utf-8') as file:
@@ -48,7 +51,7 @@ def insert_alumnos():
     with psycopg.connect(**cfg) as conn:
         with conn.cursor() as cur:
             with open('temp_data.csv', 'r', encoding='utf-8') as f:
-                with cur.copy("COPY alumnos(nombre, email_alumno) FROM STDIN WITH (FORMAT csv)") as copy:
+                with cur.copy("COPY alumnos(nombre, email_alumno, saldo) FROM STDIN WITH (FORMAT csv)") as copy:
                     while data := f.read(8192):
                         copy.write(data)
     end_time = time.perf_counter()
@@ -133,11 +136,17 @@ def insert_asignaturas() -> int:
     for i in range(1, lotes + 1):
         start_time = time.perf_counter()
 
-        profesores = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["company"], seed=123 + i, max_rand_number=count_profesores, used_ids=used_ids, array_insert=[])
+        asignaturas_raw = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["company"], seed=123 + i, max_rand_number=count_profesores, used_ids=used_ids, array_insert=[])
         
+        # Añadimos precio (entre 50 y 800 €) y max_alumnos (entre 5 y 50)
+        asignaturas = [
+            (profesor_id, nombre, round(random.uniform(50.0, 800.0), 2), random.randint(5, 50))
+            for profesor_id, nombre in asignaturas_raw
+        ]
+
         with open('temp_asignaturas.csv', 'a', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerows(profesores)
+            writer.writerows(asignaturas)
 
         end_time = time.perf_counter()
         tiempo_lote = end_time - start_time
@@ -151,7 +160,7 @@ def insert_asignaturas() -> int:
     with psycopg.connect(**cfg) as conn:
         with conn.cursor() as cur:
             with open('temp_asignaturas.csv', 'r', encoding='utf-8') as f:
-                with cur.copy("COPY asignaturas(profesor_id, nombre) FROM STDIN WITH (FORMAT csv)") as copy:
+                with cur.copy("COPY asignaturas(profesor_id, nombre, precio, max_alumnos) FROM STDIN WITH (FORMAT csv)") as copy:
                     while data := f.read(8192):
                         copy.write(data)
     end_time = time.perf_counter()
