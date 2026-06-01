@@ -3,13 +3,12 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from models.entities import AsignaturasAudit
-
 from models.db import (
-    get_asignaturas, get_auditoria_general, get_auditoria_asignatura,
-    get_profesores, insert_asignatura, update_asignatura, delete_asignatura,
-    get_asignatura, get_asignaturas_con_plazas
+    get_asignaturas, get_profesores, insert_asignatura, update_asignatura, delete_asignatura,
+    get_asignatura, get_asignaturas_con_plazas,
+    search_asignaturas, search_asignaturas_audit,
 )
+from tools.parse_params import parse_str, parse_decimal, parse_int, parse_date, parse_limit_offset
 
 asignaturas_bp = Blueprint("asignaturas", __name__, url_prefix="/asignaturas")
 
@@ -20,17 +19,61 @@ def list_():
     profesores = get_profesores()
     return render_template("asignaturas.html", asignaturas=asignaturas, profesores=profesores)
 
+@asignaturas_bp.route("/buscar")
+def buscar():
+    nombre = parse_str(request.args.get("nombre"))
+    precio_min = parse_decimal(request.args.get("precio_min"))
+    precio_max = parse_decimal(request.args.get("precio_max"))
+    max_alumnos_min = parse_int(request.args.get("max_alumnos_min"))
+    max_alumnos_max = parse_int(request.args.get("max_alumnos_max"))
+    limit, offset = parse_limit_offset(request.args)
+
+    asignaturas = search_asignaturas(
+        nombre=nombre,
+        precio_min=precio_min, precio_max=precio_max,
+        max_alumnos_min=max_alumnos_min, max_alumnos_max=max_alumnos_max,
+        limit=limit, offset=offset,
+    )
+    profesores = get_profesores()
+    return render_template(
+        "asignaturas.html",
+        asignaturas=asignaturas,
+        profesores=profesores,
+        busqueda=True,
+        params=request.args,
+        limit=limit,
+        offset=offset,
+    )
+
 @asignaturas_bp.route("/catalogo")
 def catalogo():
     asignaturas = get_asignaturas_con_plazas()
     return render_template("asignaturas_catalogo.html", asignaturas=asignaturas)
 
-@asignaturas_bp.route("/auditoria/general")
-def auditoria_general():
-    historial = get_auditoria_general("asignaturas_audit", AsignaturasAudit)
+
+@asignaturas_bp.route("/auditoria/buscar")
+def auditoria_buscar():
+    nombre = parse_str(request.args.get("nombre"))
+    operation = parse_str(request.args.get("operation"))
+    precio_min = parse_decimal(request.args.get("precio_min"))
+    precio_max = parse_decimal(request.args.get("precio_max"))
+    fecha_inicio = parse_date(request.args.get("fecha_inicio"))
+    fecha_fin = parse_date(request.args.get("fecha_fin"))
+    limit, offset = parse_limit_offset(request.args)
+
+    historial = search_asignaturas_audit(
+        nombre=nombre, operation=operation,
+        precio_min=precio_min, precio_max=precio_max,
+        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+        limit=limit, offset=offset,
+    )
     return render_template(
         "auditoria_asignaturas.html",
-        auditoria=historial
+        auditoria=historial,
+        busqueda=True,
+        params=request.args,
+        limit=limit,
+        offset=offset,
     )
 
 @asignaturas_bp.route("/add", methods=["POST"])

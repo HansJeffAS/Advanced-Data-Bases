@@ -53,6 +53,51 @@
 
 <hr style="border-color: var(--border); margin: 1.5rem 0;">
 
+<h3>Buscar matrículas</h3>
+<form action="{{ url_for('matriculas.buscar') }}" method="GET"
+  style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <div>
+    <label>Alumno</label><br>
+    <select name="alumno_id">
+      <option value="">— Cualquiera —</option>
+      {% for alumno in alumnos %}
+      <option value="{{ alumno.alumno_id }}" {% if params and params.get('alumno_id')|int==alumno.alumno_id %}selected{%
+        endif %}>
+        {{ alumno.alumno_id }} · {{ alumno.nombre }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Asignatura</label><br>
+    <select name="asignatura_id">
+      <option value="">— Cualquiera —</option>
+      {% for asig in asignaturas %}
+      <option value="{{ asig.asignatura_id }}" {% if params and params.get('asignatura_id')|int==asig.asignatura_id
+        %}selected{% endif %}>
+        {{ asig.asignatura_id }} · {{ asig.nombre }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Fecha desde</label><br>
+    <input type="date" name="fecha_inicio" value="{{ params.get('fecha_inicio', '') if params else '' }}">
+  </div>
+  <div>
+    <label>Fecha hasta</label><br>
+    <input type="date" name="fecha_fin" value="{{ params.get('fecha_fin', '') if params else '' }}">
+  </div>
+  <input type="number" name="limit" placeholder="Límite" value="{{ limit if limit else 20 }}" min="1" max="200">
+  <input type="number" name="offset" placeholder="Desde" value="{{ offset if offset else 0 }}" min="0">
+  <button type="submit">Buscar</button>
+  {% if busqueda %}<a href="{{ url_for('matriculas.list_') }}"><button type="button">Limpiar</button></a>{% endif %}
+</form>
+
+{% if busqueda %}
+<p><em>Mostrando resultados filtrados ({{ matriculas|length }} encontrados, desde {{ offset }}).</em></p>
+{% endif %}
+
 <h3>Matrículas registradas</h3>
 <ul class="list">
   {% for matricula in matriculas %}
@@ -62,4 +107,17 @@
   <li class="empty">No hay matrículas.</li>
   {% endfor %}
 </ul>
+
+{% if busqueda %}
+<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+  {% if offset > 0 %}
+  <a href="{{ url_for('matriculas.buscar', **dict(params, offset=[offset - limit]|max(0))) }}"><button type="button">←
+      Anterior</button></a>
+  {% endif %}
+  {% if matriculas|length == limit %}
+  <a href="{{ url_for('matriculas.buscar', **dict(params, offset=offset + limit)) }}"><button type="button">Siguiente
+      →</button></a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

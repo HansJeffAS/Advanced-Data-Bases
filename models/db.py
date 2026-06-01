@@ -5,6 +5,8 @@ from psycopg import sql
 
 from config import load_config
 
+from datetime import date
+from decimal import Decimal
 from typing import TypeVar, Type, Any
 
 from models.entities import Alumnos, Profesores, Asignaturas, Matriculas, AlumnosAudit, ProfesoresAudit, AsignaturasAudit
@@ -332,3 +334,270 @@ def get_vista_matriculas() -> list[dict]:
                 }
                 for r in cur.fetchall()
             ]
+
+# Filtros de busqueda
+def search_alumnos(
+    nombre: str | None = None,
+    email: str | None = None,
+    saldo_min: Decimal | None = None,
+    saldo_max: Decimal | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Alumnos]:
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if email:
+        conditions.append(sql.SQL("email_alumno ILIKE %s"))
+        params.append(f"%{email}%")
+    if saldo_min is not None:
+        conditions.append(sql.SQL("saldo >= %s"))
+        params.append(saldo_min)
+    if saldo_max is not None:
+        conditions.append(sql.SQL("saldo <= %s"))
+        params.append(saldo_max)
+
+    base = sql.SQL("SELECT alumno_id, nombre, email_alumno, saldo FROM alumnos")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY alumno_id LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [Alumnos(alumno_id=r[0], nombre=r[1], email_alumno=r[2], saldo=r[3]) for r in cur.fetchall()]
+
+
+def search_profesores(
+    nombre: str | None = None,
+    email: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Profesores]:
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if email:
+        conditions.append(sql.SQL("email_profesor ILIKE %s"))
+        params.append(f"%{email}%")
+
+    base = sql.SQL("SELECT profesor_id, nombre, email_profesor FROM profesores")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY profesor_id LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [Profesores(profesor_id=r[0], nombre=r[1], email_profesor=r[2]) for r in cur.fetchall()]
+
+
+def search_asignaturas(
+    nombre: str | None = None,
+    precio_min: Decimal | None = None,
+    precio_max: Decimal | None = None,
+    max_alumnos_min: int | None = None,
+    max_alumnos_max: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Asignaturas]:
+    """Busca asignaturas con filtros dinámicos y paginación."""
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if precio_min is not None:
+        conditions.append(sql.SQL("precio >= %s"))
+        params.append(precio_min)
+    if precio_max is not None:
+        conditions.append(sql.SQL("precio <= %s"))
+        params.append(precio_max)
+    if max_alumnos_min is not None:
+        conditions.append(sql.SQL("max_alumnos >= %s"))
+        params.append(max_alumnos_min)
+    if max_alumnos_max is not None:
+        conditions.append(sql.SQL("max_alumnos <= %s"))
+        params.append(max_alumnos_max)
+
+    base = sql.SQL("SELECT asignatura_id, nombre, profesor_id, precio, max_alumnos FROM asignaturas")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY asignatura_id LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [Asignaturas(asignatura_id=r[0], nombre=r[1], profesor_id=r[2], precio=r[3], max_alumnos=r[4]) for r in cur.fetchall()]
+
+
+def search_matriculas(
+    alumno_id: int | None = None,
+    asignatura_id: int | None = None,
+    fecha_inicio: date | None = None,
+    fecha_fin: date | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[Matriculas]:
+    """Busca matrículas por alumno, asignatura o rango de fechas, con paginación."""
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if alumno_id is not None:
+        conditions.append(sql.SQL("alumno_id = %s"))
+        params.append(alumno_id)
+    if asignatura_id is not None:
+        conditions.append(sql.SQL("asignatura_id = %s"))
+        params.append(asignatura_id)
+    if fecha_inicio is not None:
+        conditions.append(sql.SQL("fecha_matricula >= %s"))
+        params.append(fecha_inicio)
+    if fecha_fin is not None:
+        conditions.append(sql.SQL("fecha_matricula < %s::date + INTERVAL '1 day'"))
+        params.append(fecha_fin)
+
+    base = sql.SQL("SELECT matricula_id, alumno_id, asignatura_id, fecha_matricula FROM matriculas")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY matricula_id LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [Matriculas(matricula_id=r[0], alumno_id=r[1], asignatura_id=r[2], fecha_matricula=r[3]) for r in cur.fetchall()]
+
+
+def search_alumnos_audit(
+    nombre: str | None = None,
+    email: str | None = None,
+    operation: str | None = None,
+    saldo_min: Decimal | None = None,
+    saldo_max: Decimal | None = None,
+    fecha_inicio: date | None = None,
+    fecha_fin: date | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[AlumnosAudit]:
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if email:
+        conditions.append(sql.SQL("email_alumno ILIKE %s"))
+        params.append(f"%{email}%")
+    if operation:
+        conditions.append(sql.SQL("operation = %s"))
+        params.append(operation)
+    if saldo_min is not None:
+        conditions.append(sql.SQL("saldo >= %s"))
+        params.append(saldo_min)
+    if saldo_max is not None:
+        conditions.append(sql.SQL("saldo <= %s"))
+        params.append(saldo_max)
+    if fecha_inicio is not None:
+        conditions.append(sql.SQL("stamp >= %s"))
+        params.append(fecha_inicio)
+    if fecha_fin is not None:
+        conditions.append(sql.SQL("stamp < %s::date + INTERVAL '1 day'"))
+        params.append(fecha_fin)
+
+    base = sql.SQL("SELECT audit_id, operation, stamp, userid, alumno_id, nombre, email_alumno, saldo FROM alumnos_audit")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY stamp DESC LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [AlumnosAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], alumno_id=r[4], nombre=r[5], email_alumno=r[6], saldo=r[7]) for r in cur.fetchall()]
+
+
+def search_profesores_audit(
+    nombre: str | None = None,
+    email: str | None = None,
+    operation: str | None = None,
+    fecha_inicio: date | None = None,
+    fecha_fin: date | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[ProfesoresAudit]:
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if email:
+        conditions.append(sql.SQL("email_profesor ILIKE %s"))
+        params.append(f"%{email}%")
+    if operation:
+        conditions.append(sql.SQL("operation = %s"))
+        params.append(operation)
+    if fecha_inicio is not None:
+        conditions.append(sql.SQL("stamp >= %s"))
+        params.append(fecha_inicio)
+    if fecha_fin is not None:
+        conditions.append(sql.SQL("stamp < %s::date + INTERVAL '1 day'"))
+        params.append(fecha_fin)
+
+    base = sql.SQL("SELECT audit_id, operation, stamp, userid, profesor_id, nombre, email_profesor FROM profesores_audit")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY stamp DESC LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [ProfesoresAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], profesor_id=r[4], nombre=r[5], email_profesor=r[6]) for r in cur.fetchall()]
+
+
+def search_asignaturas_audit(
+    nombre: str | None = None,
+    operation: str | None = None,
+    precio_min: Decimal | None = None,
+    precio_max: Decimal | None = None,
+    fecha_inicio: date | None = None,
+    fecha_fin: date | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[AsignaturasAudit]:
+    conditions: list[sql.Composable] = []
+    params: list[Any] = []
+
+    if nombre:
+        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
+        params.append(f"%{nombre}%")
+    if operation:
+        conditions.append(sql.SQL("operation = %s"))
+        params.append(operation)
+    if precio_min is not None:
+        conditions.append(sql.SQL("precio >= %s"))
+        params.append(precio_min)
+    if precio_max is not None:
+        conditions.append(sql.SQL("precio <= %s"))
+        params.append(precio_max)
+    if fecha_inicio is not None:
+        conditions.append(sql.SQL("stamp >= %s"))
+        params.append(fecha_inicio)
+    if fecha_fin is not None:
+        conditions.append(sql.SQL("stamp < %s::date + INTERVAL '1 day'"))
+        params.append(fecha_fin)
+
+    base = sql.SQL("SELECT audit_id, operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos FROM asignaturas_audit")
+    where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
+    query = base + where + sql.SQL(" ORDER BY stamp DESC LIMIT %s OFFSET %s")
+    params += [limit, offset]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return [AsignaturasAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], asignatura_id=r[4], profesor_id=r[5], nombre=r[6], precio=r[7], max_alumnos=r[8]) for r in cur.fetchall()]

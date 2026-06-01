@@ -1,6 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Auditoria de Alumnos</h1>
+<h1>Auditoría de Alumnos</h1>
+
+<h3>Buscar en auditoría</h3>
+<form action="{{ url_for('alumnos.auditoria_buscar') }}" method="GET"
+  style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <input type="text" name="nombre" placeholder="Nombre" value="{{ params.get('nombre', '')     if params else '' }}">
+  <input type="email" name="email" placeholder="Email" value="{{ params.get('email', '')      if params else '' }}">
+  <select name="operation">
+    <option value="">— Operación —</option>
+    <option value="I" {% if params and params.get('operation')=='I' %}selected{% endif %}>INSERT (I)</option>
+    <option value="U" {% if params and params.get('operation')=='U' %}selected{% endif %}>UPDATE (U)</option>
+    <option value="D" {% if params and params.get('operation')=='D' %}selected{% endif %}>DELETE (D)</option>
+  </select>
+  <input type="number" name="saldo_min" placeholder="Saldo mín €"
+    value="{{ params.get('saldo_min', '')  if params else '' }}" min="0" step="0.01">
+  <input type="number" name="saldo_max" placeholder="Saldo máx €"
+    value="{{ params.get('saldo_max', '')  if params else '' }}" min="0" step="0.01">
+  <input type="date" name="fecha_inicio" value="{{ params.get('fecha_inicio', '') if params else '' }}">
+  <input type="date" name="fecha_fin" value="{{ params.get('fecha_fin', '')    if params else '' }}">
+  <input type="number" name="limit" placeholder="Límite" value="{{ limit if limit else 20 }}" min="1" max="200">
+  <input type="number" name="offset" placeholder="Desde" value="{{ offset if offset else 0 }}" min="0">
+  <button type="submit">Buscar</button>
+  {% if busqueda %}<a href="{{ url_for('alumnos.auditoria_buscar') }}"><button type="button">Limpiar</button></a>{%
+  endif %}
+</form>
+
+{% if busqueda %}
+<p><em>Mostrando resultados filtrados ({{ auditoria|length }} encontrados, desde {{ offset }}).</em></p>
+{% endif %}
+
 <ul class="list">
   {% for reg in auditoria %}
   <li>
@@ -13,5 +42,19 @@
   <li>No hay registros en la auditoría.</li>
   {% endfor %}
 </ul>
+
+{% if busqueda %}
+<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+  {% if offset > 0 %}
+  <a href="{{ url_for('alumnos.auditoria_buscar', **dict(params, offset=[offset - limit]|max(0))) }}"><button
+      type="button">← Anterior</button></a>
+  {% endif %}
+  {% if auditoria|length == limit %}
+  <a href="{{ url_for('alumnos.auditoria_buscar', **dict(params, offset=offset + limit)) }}"><button
+      type="button">Siguiente →</button></a>
+  {% endif %}
+</div>
+{% endif %}
+
 <a href="{{ url_for('alumnos.list_') }}">Volver a la lista</a>
 {% endblock %}

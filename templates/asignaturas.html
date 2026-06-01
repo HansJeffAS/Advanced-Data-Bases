@@ -3,8 +3,31 @@
 {% block content %}
 <h1>Asignaturas</h1>
 <div style="margin-bottom: 20px;">
-  <a href="{{ url_for('asignaturas.auditoria_general') }}" class="btn-general"> Ver Auditoría General </a>
+  <a href="{{ url_for('asignaturas.auditoria_buscar') }}" class="btn-general"> Ver Auditoría </a>
 </div>
+
+<h3>Buscar asignaturas</h3>
+<form action="{{ url_for('asignaturas.buscar') }}" method="GET"
+  style="margin-bottom: 20px; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <input type="text" name="nombre" placeholder="Nombre"
+    value="{{ params.get('nombre', '')          if params else '' }}">
+  <input type="number" name="precio_min" placeholder="Precio mín €"
+    value="{{ params.get('precio_min', '')       if params else '' }}" min="0" step="0.01">
+  <input type="number" name="precio_max" placeholder="Precio máx €"
+    value="{{ params.get('precio_max', '')       if params else '' }}" min="0" step="0.01">
+  <input type="number" name="max_alumnos_min" placeholder="Máx alumnos mín"
+    value="{{ params.get('max_alumnos_min', '')  if params else '' }}" min="1">
+  <input type="number" name="max_alumnos_max" placeholder="Máx alumnos máx"
+    value="{{ params.get('max_alumnos_max', '')  if params else '' }}" min="1">
+  <input type="number" name="limit" placeholder="Límite" value="{{ limit if limit else 20 }}" min="1" max="200">
+  <input type="number" name="offset" placeholder="Desde" value="{{ offset if offset else 0 }}" min="0">
+  <button type="submit">Buscar</button>
+  {% if busqueda %}<a href="{{ url_for('asignaturas.list_') }}"><button type="button">Limpiar</button></a>{% endif %}
+</form>
+
+{% if busqueda %}
+<p><em>Mostrando resultados filtrados ({{ asignaturas|length }} encontrados, desde {{ offset }}).</em></p>
+{% endif %}
 
 <h3>Agregar nueva asignatura</h3>
 <form action="{{ url_for('asignaturas.add') }}" method="POST" style="margin-bottom: 20px;">
@@ -40,4 +63,17 @@
   <li class="empty">No hay Asignaturas.</li>
   {% endfor %}
 </ul>
+
+{% if busqueda %}
+<div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+  {% if offset > 0 %}
+  <a href="{{ url_for('asignaturas.buscar', **dict(params, offset=[offset - limit]|max(0))) }}"><button type="button">←
+      Anterior</button></a>
+  {% endif %}
+  {% if asignaturas|length == limit %}
+  <a href="{{ url_for('asignaturas.buscar', **dict(params, offset=offset + limit)) }}"><button type="button">Siguiente
+      →</button></a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

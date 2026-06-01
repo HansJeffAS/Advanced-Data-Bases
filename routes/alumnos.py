@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request, redirect, url_for
 
-from models.entities import AlumnosAudit
-
-from models.db import get_alumnos, get_auditoria_general, get_auditoria_alumno, insert_alumno, update_alumno, delete_alumno, get_alumno
+from models.db import (
+    get_alumnos, insert_alumno, update_alumno, delete_alumno, get_alumno,
+    search_alumnos, search_alumnos_audit,
+)
+from tools.parse_params import parse_str, parse_decimal, parse_date, parse_limit_offset
 
 alumnos_bp = Blueprint("alumnos", __name__, url_prefix="/alumnos")
 
@@ -14,13 +16,53 @@ def list_():
     alumnos = get_alumnos()
     return render_template("alumnos.html", alumnos=alumnos)
 
-@alumnos_bp.route("/auditoria/general")
-def auditoria_general():
-    historial = get_auditoria_general(tabla="alumnos_audit", modelo=AlumnosAudit)
-        
+@alumnos_bp.route("/buscar")
+def buscar():
+    nombre = parse_str(request.args.get("nombre"))
+    email = parse_str(request.args.get("email"))
+    saldo_min = parse_decimal(request.args.get("saldo_min"))
+    saldo_max = parse_decimal(request.args.get("saldo_max"))
+    limit, offset = parse_limit_offset(request.args)
+
+    alumnos = search_alumnos(
+        nombre=nombre, email=email,
+        saldo_min=saldo_min, saldo_max=saldo_max,
+        limit=limit, offset=offset,
+    )
+    return render_template(
+        "alumnos.html",
+        alumnos=alumnos,
+        busqueda=True,
+        params=request.args,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@alumnos_bp.route("/auditoria/buscar")
+def auditoria_buscar():
+    nombre = parse_str(request.args.get("nombre"))
+    email = parse_str(request.args.get("email"))
+    operation = parse_str(request.args.get("operation"))
+    saldo_min = parse_decimal(request.args.get("saldo_min"))
+    saldo_max = parse_decimal(request.args.get("saldo_max"))
+    fecha_inicio = parse_date(request.args.get("fecha_inicio"))
+    fecha_fin = parse_date(request.args.get("fecha_fin"))
+    limit, offset = parse_limit_offset(request.args)
+
+    historial = search_alumnos_audit(
+        nombre=nombre, email=email, operation=operation,
+        saldo_min=saldo_min, saldo_max=saldo_max,
+        fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+        limit=limit, offset=offset,
+    )
     return render_template(
         "auditoria_alumnos.html",
-        auditoria=historial
+        auditoria=historial,
+        busqueda=True,
+        params=request.args,
+        limit=limit,
+        offset=offset,
     )
 
 @alumnos_bp.route("/add", methods=["POST"])
