@@ -23,7 +23,7 @@
         <option value="">— Seleccionar —</option>
         {% for asig in asignaturas %}
         <option value="{{ asig.asignatura_id }}" {% if asignatura_sel==asig.asignatura_id %}selected{% endif %}>
-          {{ asig.asignatura_id }} · {{ asig.nombre }} ({{ "%.2f"|format(asig.precio) }}€ · Máx: {{ asig.max_alumnos }})
+          {{ asig.asignatura_id }} · {{ asig.nombre.get('es') }} ({{ asig.nombre.get('en') }}) ({{ "%.2f"|format(asig.precio) }}€ · Máx: {{ asig.max_alumnos }})
         </option>
         {% endfor %}
       </select>
@@ -75,7 +75,7 @@
       {% for asig in asignaturas %}
       <option value="{{ asig.asignatura_id }}" {% if params and params.get('asignatura_id')|int==asig.asignatura_id
         %}selected{% endif %}>
-        {{ asig.asignatura_id }} · {{ asig.nombre }}
+        {{ asig.asignatura_id }} · {{ asig.nombre.get('es') }} ({{ asig.nombre.get('en') }})
       </option>
       {% endfor %}
     </select>

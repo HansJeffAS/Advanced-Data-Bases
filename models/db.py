@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import psycopg
 from psycopg import sql
+import json
 
 from config import load_config
 
@@ -200,16 +201,16 @@ def get_asignatura(asignatura_id: int) -> Asignaturas | None:
                 return Asignaturas(asignatura_id=r[0], nombre=r[1], profesor_id=r[2], precio=r[3], max_alumnos=r[4])
             return None
 
-def insert_asignatura(nombre: str, profesor_id: int | None, precio: float = 0.0, max_alumnos: int = 30) -> None:
+def insert_asignatura(nombre: dict[str, str], profesor_id: int | None, precio: float = 0.0, max_alumnos: int = 30) -> None:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO asignaturas (nombre, profesor_id, precio, max_alumnos) VALUES (%s, %s, %s, %s)", (nombre, profesor_id, precio, max_alumnos))
+            cur.execute("INSERT INTO asignaturas (nombre, profesor_id, precio, max_alumnos) VALUES (%s, %s, %s, %s)", (json.dumps(nombre), profesor_id, precio, max_alumnos))
         conn.commit()
 
-def update_asignatura(asignatura_id: int, nombre: str, profesor_id: int | None, precio: float, max_alumnos: int) -> None:
+def update_asignatura(asignatura_id: int, nombre: dict[str, str], profesor_id: int | None, precio: float, max_alumnos: int) -> None:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("UPDATE asignaturas SET nombre = %s, profesor_id = %s, precio = %s, max_alumnos = %s WHERE asignatura_id = %s", (nombre, profesor_id, precio, max_alumnos, asignatura_id))
+            cur.execute("UPDATE asignaturas SET nombre = %s, profesor_id = %s, precio = %s, max_alumnos = %s WHERE asignatura_id = %s", (json.dumps(nombre), profesor_id, precio, max_alumnos, asignatura_id))
         conn.commit()
 
 def delete_asignatura(asignatura_id: int) -> None:
@@ -400,6 +401,8 @@ def search_profesores(
 
 def search_asignaturas(
     nombre: str | None = None,
+    idioma: str | None = None,
+    modo_busqueda: str | None = None,
     precio_min: Decimal | None = None,
     precio_max: Decimal | None = None,
     max_alumnos_min: int | None = None,
@@ -412,8 +415,14 @@ def search_asignaturas(
     params: list[Any] = []
 
     if nombre:
-        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
-        params.append(f"%{nombre}%")
+        lang_key = idioma if idioma in ('es', 'en') else 'es'
+        if modo_busqueda == 'fts':
+            pg_lang = 'spanish' if lang_key == 'es' else 'english'
+            conditions.append(sql.SQL("to_tsvector(%s, nombre->>%s) @@ plainto_tsquery(%s, %s)"))
+            params.extend([pg_lang, lang_key, pg_lang, nombre])
+        else:
+            conditions.append(sql.SQL("(nombre->>%s) %% %s"))
+            params.extend([lang_key, nombre])
     if precio_min is not None:
         conditions.append(sql.SQL("precio >= %s"))
         params.append(precio_min)
@@ -562,6 +571,8 @@ def search_profesores_audit(
 
 def search_asignaturas_audit(
     nombre: str | None = None,
+    idioma: str | None = None,
+    modo_busqueda: str | None = None,
     operation: str | None = None,
     precio_min: Decimal | None = None,
     precio_max: Decimal | None = None,
@@ -574,8 +585,14 @@ def search_asignaturas_audit(
     params: list[Any] = []
 
     if nombre:
-        conditions.append(sql.SQL("unaccent(nombre) ILIKE unaccent(%s)"))
-        params.append(f"%{nombre}%")
+        lang_key = idioma if idioma in ('es', 'en') else 'es'
+        if modo_busqueda == 'fts':
+            pg_lang = 'spanish' if lang_key == 'es' else 'english'
+            conditions.append(sql.SQL("to_tsvector(%s, nombre->>%s) @@ plainto_tsquery(%s, %s)"))
+            params.extend([pg_lang, lang_key, pg_lang, nombre])
+        else:
+            conditions.append(sql.SQL("(nombre->>%s) %% %s"))
+            params.extend([lang_key, nombre])
     if operation:
         conditions.append(sql.SQL("operation = %s"))
         params.append(operation)

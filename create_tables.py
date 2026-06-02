@@ -27,7 +27,7 @@ DDL = (
     CREATE TABLE asignaturas (
         asignatura_id SERIAL PRIMARY KEY,
         profesor_id INTEGER REFERENCES profesores(profesor_id) ON DELETE SET NULL,
-        nombre VARCHAR(100) NOT NULL,
+        nombre JSONB NOT NULL,
         precio NUMERIC(10,2) DEFAULT 0.00 NOT NULL,
         max_alumnos INTEGER DEFAULT 30 NOT NULL
     )
@@ -71,7 +71,7 @@ DDL = (
         userid text NOT NULL,
         asignatura_id integer,
         profesor_id integer,
-        nombre text NOT NULL,
+        nombre JSONB NOT NULL,
         precio numeric(10,2),
         max_alumnos integer
     )
@@ -94,7 +94,7 @@ DDL = (
     SELECT
         al.nombre        AS nombre_alumno,
         pr.nombre        AS nombre_profesor,
-        asig.nombre      AS nombre_asignatura
+        (asig.nombre->>'es') || ' (' || (asig.nombre->>'en') || ')' AS nombre_asignatura
     FROM matriculas m
     JOIN alumnos      al   ON al.alumno_id       = m.alumno_id
     JOIN asignaturas  asig ON asig.asignatura_id = m.asignatura_id
@@ -127,13 +127,21 @@ DDL = (
     "CREATE INDEX IF NOT EXISTS idx_gin_profesores_nombre      ON profesores      USING GIN(nombre          gin_trgm_ops);",
     "CREATE INDEX IF NOT EXISTS idx_gin_profesores_email       ON profesores      USING GIN(email_profesor  gin_trgm_ops);",
 
-    "CREATE INDEX IF NOT EXISTS idx_gin_asignaturas_nombre     ON asignaturas     USING GIN(nombre          gin_trgm_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_gin_asignaturas_nombre_jsonb ON asignaturas USING GIN(nombre jsonb_path_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_nombre_es ON asignaturas USING GIN(to_tsvector('spanish', nombre->>'es'));",
+    "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_nombre_en ON asignaturas USING GIN(to_tsvector('english', nombre->>'en'));",
+    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_nombre_es ON asignaturas USING GIN((nombre->>'es') gin_trgm_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_nombre_en ON asignaturas USING GIN((nombre->>'en') gin_trgm_ops);",
 
     "CREATE INDEX IF NOT EXISTS idx_gin_alumnos_audit_nombre   ON alumnos_audit   USING GIN(nombre          gin_trgm_ops);",
     "CREATE INDEX IF NOT EXISTS idx_gin_alumnos_audit_email    ON alumnos_audit   USING GIN(email_alumno    gin_trgm_ops);",
     "CREATE INDEX IF NOT EXISTS idx_gin_profesores_audit_nombre ON profesores_audit USING GIN(nombre        gin_trgm_ops);",
     "CREATE INDEX IF NOT EXISTS idx_gin_profesores_audit_email  ON profesores_audit USING GIN(email_profesor gin_trgm_ops);",
-    "CREATE INDEX IF NOT EXISTS idx_gin_asignaturas_audit_nombre ON asignaturas_audit USING GIN(nombre      gin_trgm_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_gin_asignaturas_audit_nombre_jsonb ON asignaturas_audit USING GIN(nombre jsonb_path_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_audit_nombre_es ON asignaturas_audit USING GIN(to_tsvector('spanish', nombre->>'es'));",
+    "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_audit_nombre_en ON asignaturas_audit USING GIN(to_tsvector('english', nombre->>'en'));",
+    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_audit_nombre_es ON asignaturas_audit USING GIN((nombre->>'es') gin_trgm_ops);",
+    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_audit_nombre_en ON asignaturas_audit USING GIN((nombre->>'en') gin_trgm_ops);"
 )
 
 def create_tables() -> None:

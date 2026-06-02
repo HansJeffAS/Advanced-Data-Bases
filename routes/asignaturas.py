@@ -22,6 +22,8 @@ def list_():
 @asignaturas_bp.route("/buscar")
 def buscar():
     nombre = parse_str(request.args.get("nombre"))
+    idioma = parse_str(request.args.get("idioma"))
+    modo_busqueda = parse_str(request.args.get("modo_busqueda"))
     precio_min = parse_decimal(request.args.get("precio_min"))
     precio_max = parse_decimal(request.args.get("precio_max"))
     max_alumnos_min = parse_int(request.args.get("max_alumnos_min"))
@@ -29,7 +31,7 @@ def buscar():
     limit, offset = parse_limit_offset(request.args)
 
     asignaturas = search_asignaturas(
-        nombre=nombre,
+        nombre=nombre, idioma=idioma, modo_busqueda=modo_busqueda,
         precio_min=precio_min, precio_max=precio_max,
         max_alumnos_min=max_alumnos_min, max_alumnos_max=max_alumnos_max,
         limit=limit, offset=offset,
@@ -54,6 +56,8 @@ def catalogo():
 @asignaturas_bp.route("/auditoria/buscar")
 def auditoria_buscar():
     nombre = parse_str(request.args.get("nombre"))
+    idioma = parse_str(request.args.get("idioma"))
+    modo_busqueda = parse_str(request.args.get("modo_busqueda"))
     operation = parse_str(request.args.get("operation"))
     precio_min = parse_decimal(request.args.get("precio_min"))
     precio_max = parse_decimal(request.args.get("precio_max"))
@@ -62,7 +66,7 @@ def auditoria_buscar():
     limit, offset = parse_limit_offset(request.args)
 
     historial = search_asignaturas_audit(
-        nombre=nombre, operation=operation,
+        nombre=nombre, idioma=idioma, modo_busqueda=modo_busqueda, operation=operation,
         precio_min=precio_min, precio_max=precio_max,
         fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
         limit=limit, offset=offset,
@@ -78,7 +82,8 @@ def auditoria_buscar():
 
 @asignaturas_bp.route("/add", methods=["POST"])
 def add():
-    nombre = request.form.get("nombre")
+    nombre_es = request.form.get("nombre_es")
+    nombre_en = request.form.get("nombre_en")
     profesor_id = request.form.get("profesor_id")
     precio_str = request.form.get("precio", "0")
     max_alumnos_str = request.form.get("max_alumnos", "30")
@@ -98,14 +103,16 @@ def add():
     except ValueError:
         max_alumnos = 30
         
-    if nombre:
+    if nombre_es and nombre_en:
+        nombre = {"es": nombre_es, "en": nombre_en}
         insert_asignatura(nombre, profesor_id, precio, max_alumnos)
     return redirect(url_for("asignaturas.list_"))
 
 @asignaturas_bp.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
     if request.method == "POST":
-        nombre = request.form.get("nombre")
+        nombre_es = request.form.get("nombre_es")
+        nombre_en = request.form.get("nombre_en")
         profesor_id = request.form.get("profesor_id")
         precio_str = request.form.get("precio", "0")
         max_alumnos_str = request.form.get("max_alumnos", "30")
@@ -125,7 +132,8 @@ def edit(id):
         except ValueError:
             max_alumnos = 30
 
-        if nombre:
+        if nombre_es and nombre_en:
+            nombre = {"es": nombre_es, "en": nombre_en}
             update_asignatura(id, nombre, profesor_id, precio, max_alumnos)
         return redirect(url_for("asignaturas.list_"))
     

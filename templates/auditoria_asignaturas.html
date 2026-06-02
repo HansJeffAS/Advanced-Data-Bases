@@ -5,6 +5,14 @@
 <h3>Buscar en auditoría</h3>
 <form action="{{ url_for('asignaturas.auditoria_buscar') }}" method="GET"
   style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <select name="idioma">
+    <option value="es" {% if params and params.get('idioma') == 'es' %}selected{% endif %}>Español</option>
+    <option value="en" {% if params and params.get('idioma') == 'en' %}selected{% endif %}>Inglés</option>
+  </select>
+  <select name="modo_busqueda">
+    <option value="fts" {% if params and params.get('modo_busqueda') == 'fts' %}selected{% endif %}>Texto Completo (FTS)</option>
+    <option value="trgm" {% if params and params.get('modo_busqueda') == 'trgm' %}selected{% endif %}>Similitud Difusa</option>
+  </select>
   <input type="text" name="nombre" placeholder="Nombre" value="{{ params.get('nombre', '')    if params else '' }}">
   <select name="operation">
     <option value="">— Operación —</option>
@@ -36,7 +44,7 @@
     Operación: {{ reg.operation }} |
     Modificado por: {{ reg.userid }} |
     Codigo de Asignatura: {{ reg.asignatura_id }} | Codigo de Profesor: {{ reg.profesor_id }} | Asignatura:
-    {{reg.nombre}}
+    {{ reg.nombre.get('es') }} ({{ reg.nombre.get('en') }})
   </li>
   {% else %}
   <li>No hay registros en la auditoría.</li>

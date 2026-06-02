@@ -4,6 +4,8 @@ import psycopg
 
 import random
 import csv
+import json
+from faker import Faker
 
 import time
 import os
@@ -132,17 +134,25 @@ def insert_asignaturas() -> int:
     if os.path.exists('temp_asignaturas.csv'):
         os.remove('temp_asignaturas.csv')
 
+    fake_en = Faker("en_US")
+
     # Generación de todos los lotes
     for i in range(1, lotes + 1):
         start_time = time.perf_counter()
+        fake_en.seed_instance(123 + i)
 
         asignaturas_raw = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["company"], seed=123 + i, max_rand_number=count_profesores, used_ids=used_ids, array_insert=[])
         
         # Añadimos precio (entre 50 y 800 €) y max_alumnos (entre 5 y 50)
-        asignaturas = [
-            (profesor_id, nombre, round(random.uniform(50.0, 800.0), 2), random.randint(5, 50))
-            for profesor_id, nombre in asignaturas_raw
-        ]
+        asignaturas = []
+        for profesor_id, nombre_es in asignaturas_raw:
+            nombre_en = fake_en.company()
+            asignaturas.append((
+                profesor_id, 
+                json.dumps({"es": nombre_es, "en": nombre_en}), 
+                round(random.uniform(50.0, 800.0), 2), 
+                random.randint(5, 50)
+            ))
 
         with open('temp_asignaturas.csv', 'a', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)

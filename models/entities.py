@@ -22,7 +22,7 @@ class Profesores:
 class Asignaturas:
     asignatura_id: int
     profesor_id: int
-    nombre: str
+    nombre: dict[str, str]
     precio: Decimal
     max_alumnos: int
 
@@ -62,6 +62,6 @@ class AsignaturasAudit:
     userid: str
     asignatura_id: int
     profesor_id: int
-    nombre: str
+    nombre: dict[str, str]
     precio: Decimal
     max_alumnos: int

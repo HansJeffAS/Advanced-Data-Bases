@@ -9,6 +9,14 @@
 <h3>Buscar asignaturas</h3>
 <form action="{{ url_for('asignaturas.buscar') }}" method="GET"
   style="margin-bottom: 20px; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+  <select name="idioma">
+    <option value="es" {% if params and params.get('idioma') == 'es' %}selected{% endif %}>Español</option>
+    <option value="en" {% if params and params.get('idioma') == 'en' %}selected{% endif %}>Inglés</option>
+  </select>
+  <select name="modo_busqueda">
+    <option value="fts" {% if params and params.get('modo_busqueda') == 'fts' %}selected{% endif %}>Texto Completo (FTS)</option>
+    <option value="trgm" {% if params and params.get('modo_busqueda') == 'trgm' %}selected{% endif %}>Similitud Difusa</option>
+  </select>
   <input type="text" name="nombre" placeholder="Nombre"
     value="{{ params.get('nombre', '')          if params else '' }}">
   <input type="number" name="precio_min" placeholder="Precio mín €"
@@ -31,7 +39,8 @@
 
 <h3>Agregar nueva asignatura</h3>
 <form action="{{ url_for('asignaturas.add') }}" method="POST" style="margin-bottom: 20px;">
-  <input type="text" name="nombre" placeholder="Nombre" required>
+  <input type="text" name="nombre_es" placeholder="Nombre (ES)" required>
+  <input type="text" name="nombre_en" placeholder="Nombre (EN)" required>
   <select name="profesor_id" required>
     <option value="">Seleccione un profesor</option>
     {% for profe in profesores %}
@@ -47,7 +56,7 @@
   {% for asignatura in asignaturas %}
   <li
     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc;">
-    <span>{{ asignatura.asignatura_id }} — {{ asignatura.nombre }} — ID Profesor: {{ asignatura.profesor_id }} —
+    <span>{{ asignatura.asignatura_id }} — {{ asignatura.nombre.get('es') }} ({{ asignatura.nombre.get('en') }}) — ID Profesor: {{ asignatura.profesor_id }} —
       <strong>{{ "%.2f"|format(asignatura.precio) }}€</strong> — Máx: {{ asignatura.max_alumnos }}</span>
     <span style="margin-left: 20px;">
       <a href="{{ url_for('asignaturas.edit', id=asignatura.asignatura_id) }}">
