@@ -618,3 +618,161 @@ def search_asignaturas_audit(
         with conn.cursor() as cur:
             cur.execute(query, params)
             return [AsignaturasAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], asignatura_id=r[4], profesor_id=r[5], nombre=r[6], precio=r[7], max_alumnos=r[8]) for r in cur.fetchall()]
+
+
+# Consultas OLAP
+def get_olap_row_number() -> list[dict]:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                WITH gastos_por_mes AS (
+                    -- Paso 1: Calculamos lo que gasta cada alumno en cada mes
+                    SELECT 
+                        TO_CHAR(m.fecha_matricula, 'YYYY-MM') as mes,
+                        a.nombre as alumno_nombre,
+                        SUM(asig.precio) as total_gastado
+                    FROM alumnos a
+                    JOIN matriculas m ON a.alumno_id = m.alumno_id
+                    JOIN asignaturas asig ON m.asignatura_id = asig.asignatura_id
+                    GROUP BY TO_CHAR(m.fecha_matricula, 'YYYY-MM'), a.alumno_id, a.nombre
+                ),
+                ranking_mes AS (
+                    -- Paso 2: Asignamos el número de fila (ranking) DENTRO de cada mes
+                    SELECT 
+                        mes,
+                        alumno_nombre,
+                        total_gastado,
+                        ROW_NUMBER() OVER (PARTITION BY mes ORDER BY total_gastado DESC) as ranking
+                    FROM gastos_por_mes
+                )
+                -- Paso 3: Filtramos solo el Top 3 de cada mes
+                SELECT 
+                    mes,
+                    alumno_nombre,
+                    total_gastado,
+                    ranking
+                FROM ranking_mes
+                WHERE ranking <= 3
+                ORDER BY mes DESC, ranking ASC;
+            """)
+            return [
+                {
+                    "mes": r[0],
+                    "alumno_nombre": r[1],
+                    "total_gastado": float(r[2]) if r[2] is not None else 0.0,
+                    "ranking": r[3]
+                }
+                for r in cur.fetchall()
+            ]
+
+
+def get_olap_grouping_sets() -> list[dict]:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    p.nombre as profesor,
+                    asig.nombre->>'es' as asignatura,
+                    COUNT(m.matricula_id) as total_matriculas,
+                    SUM(asig.precio) as ingresos_totales,
+                    GROUPING(p.nombre) as g_profesor,
+                    GROUPING(asig.nombre->>'es') as g_asignatura
+                FROM matriculas m
+                JOIN asignaturas asig ON m.asignatura_id = asig.asignatura_id
+                LEFT JOIN profesores p ON asig.profesor_id = p.profesor_id
+                GROUP BY GROUPING SETS (
+                    (p.nombre, asig.nombre->>'es'),
+                    (p.nombre),
+                    ()
+                )
+                ORDER BY p.nombre NULLS LAST, asig.nombre->>'es' NULLS LAST;
+            """)
+            
+            resultados = []
+            for r in cur.fetchall():
+                prof_val = r[0]
+                asig_val = r[1]
+                total_matriculas = r[2]
+                ingresos = r[3]
+                g_prof = r[4]
+                g_asig = r[5]
+                
+                resultados.append({
+                    "profesor": "Todos los profesores" if g_prof == 1 else prof_val,
+                    "asignatura": "Todas las asignaturas" if g_asig == 1 else asig_val,
+                    "total_matriculas": total_matriculas,
+                    "ingresos_totales": float(ingresos) if ingresos is not None else 0.0,
+                    "es_total_profesor": bool(g_prof),
+                    "es_total_asignatura": bool(g_asig)
+                })
+                
+            return resultados
+
+
+def get_olap_rollup() -> list[dict]:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    TO_CHAR(m.fecha_matricula, 'YYYY') as anio,
+                    TO_CHAR(m.fecha_matricula, 'MM') as mes,
+                    COUNT(*) as total_matriculas,
+                    SUM(asig.precio) as ingresos,
+                    GROUPING(TO_CHAR(m.fecha_matricula, 'YYYY')) as g_anio,
+                    GROUPING(TO_CHAR(m.fecha_matricula, 'MM')) as g_mes
+                FROM matriculas m
+                JOIN asignaturas asig ON m.asignatura_id = asig.asignatura_id
+                GROUP BY ROLLUP (
+                    TO_CHAR(m.fecha_matricula, 'YYYY'),
+                    TO_CHAR(m.fecha_matricula, 'MM')
+                )
+                ORDER BY 
+                    TO_CHAR(m.fecha_matricula, 'YYYY') NULLS LAST, 
+                    TO_CHAR(m.fecha_matricula, 'MM') NULLS LAST;
+            """)
+            
+            resultados = []
+            for r in cur.fetchall():
+                anio_val = r[0]
+                mes_val = r[1]
+                total_matriculas = r[2]
+                ingresos = r[3]
+                g_anio = r[4]
+                g_mes = r[5]
+                
+                resultados.append({
+                    "anio": "Todos los años" if g_anio == 1 else anio_val,
+                    "mes": "Todos los meses" if g_mes == 1 else mes_val,
+                    "total_matriculas": total_matriculas,
+                    "ingresos": float(ingresos) if ingresos is not None else 0.0,
+                    "es_total_anio": bool(g_anio),
+                    "es_total_mes": bool(g_mes)
+                })
+                
+            return resultados
+
+
+def get_olap_filter() -> list[dict]:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    p.nombre as profesor,
+                    COUNT(m.matricula_id) FILTER (WHERE asig.precio > 50) as matriculas_caras,
+                    COUNT(m.matricula_id) FILTER (WHERE asig.precio <= 50) as matriculas_baratas,
+                    COUNT(m.matricula_id) as total_matriculas
+                FROM profesores p
+                JOIN asignaturas asig ON p.profesor_id = asig.profesor_id
+                LEFT JOIN matriculas m ON asig.asignatura_id = m.asignatura_id
+                GROUP BY p.profesor_id, p.nombre
+                ORDER BY total_matriculas DESC;
+            """)
+            return [
+                {
+                    "profesor": r[0],
+                    "matriculas_caras": r[1],
+                    "matriculas_baratas": r[2],
+                    "total_matriculas": r[3]
+                }
+                for r in cur.fetchall()
+            ]

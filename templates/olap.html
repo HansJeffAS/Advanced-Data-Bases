@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Búsquedas OLAP — MVC labo2{% endblock %}
+{% block content %}
+
+<h1>Búsquedas OLAP</h1>
+<p>Análisis avanzado utilizando ROW_NUMBER, GROUPING SETS, ROLLUP y FILTER.</p>
+
+<div class="olap-section">
+  <h2>1. Ranking de Alumnos por Gastos por Mes (ROW_NUMBER)</h2>
+  <p>Top 3 alumnos que más han invertido en matrículas, separado por cada mes.</p>
+  <table class="olap-table">
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th>Ranking</th>
+        <th>Nombre del Alumno</th>
+        <th>Total Gastado (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data_row_number %}
+      <tr>
+        <td>{{ row.mes }}</td>
+        <td>{{ row.ranking }}</td>
+        <td>{{ row.alumno_nombre }}</td>
+        <td>{{ row.total_gastado }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No hay datos disponibles.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="olap-section">
+  <h2>2. Ingresos por Profesor y Asignatura (GROUPING SETS)</h2>
+  <p>Agrupaciones por Profesor y Asignatura, por Profesor, y Totales Generales.</p>
+  <table class="olap-table">
+    <thead>
+      <tr>
+        <th>Profesor</th>
+        <th>Asignatura</th>
+        <th>Total Matrículas</th>
+        <th>Ingresos Totales (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data_grouping_sets %}
+      <tr
+        class="{% if row.profesor == 'Todos los profesores' and row.asignatura == 'Todas las asignaturas' %}highlight-total{% endif %}">
+        <td>{{ row.profesor }}</td>
+        <td>{{ row.asignatura }}</td>
+        <td>{{ row.total_matriculas }}</td>
+        <td>{{ row.ingresos_totales }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No hay datos disponibles.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="olap-section">
+  <h2>3. Matrículas e Ingresos por Año y Mes (ROLLUP)</h2>
+  <p>Subtotales anuales y totales generales por mes y año de matrícula.</p>
+  <table class="olap-table">
+    <thead>
+      <tr>
+        <th>Año</th>
+        <th>Mes</th>
+        <th>Total Matrículas</th>
+        <th>Ingresos (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data_rollup %}
+      <tr
+        class="{% if row.anio == 'Todos los años' %}highlight-total{% elif row.mes == 'Todos los meses' %}highlight-total{% endif %}">
+        <td>{{ row.anio }}</td>
+        <td>{{ row.mes }}</td>
+        <td>{{ row.total_matriculas }}</td>
+        <td>{{ row.ingresos }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No hay datos disponibles.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="olap-section">
+  <h2>4. Matrículas según Precio de Asignatura (FILTER)</h2>
+  <p>Contador de matrículas por profesor diferenciando asignaturas caras (> 50€) y baratas (<= 50€).</p>
+      <table class="olap-table">
+        <thead>
+          <tr>
+            <th>Profesor</th>
+            <th>Matrículas Caras (>50€)</th>
+            <th>Matrículas Baratas (<=50€)< /th>
+            <th>Total Matrículas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data_filter %}
+          <tr>
+            <td>{{ row.profesor }}</td>
+            <td>{{ row.matriculas_caras }}</td>
+            <td>{{ row.matriculas_baratas }}</td>
+            <td>{{ row.total_matriculas }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4">No hay datos disponibles.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+</div>
+{% endblock %}
