@@ -14,14 +14,14 @@ DDL = (
     CREATE OR REPLACE FUNCTION process_alumnos_audit() RETURNS TRIGGER AS $alumnos_audit$
         BEGIN
             IF (TG_OP = 'DELETE') THEN
-                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo)
-                VALUES ('D', now(), current_user, OLD.alumno_id, OLD.nombre, OLD.email_alumno, OLD.saldo);
+                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo, ubicacion)
+                VALUES ('D', now(), current_user, OLD.alumno_id, OLD.nombre, OLD.email_alumno, OLD.saldo, OLD.ubicacion);
             ELSIF (TG_OP = 'UPDATE') THEN
-                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo)
-                VALUES ('U', now(), current_user, NEW.alumno_id, NEW.nombre, NEW.email_alumno, NEW.saldo);
+                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo, ubicacion)
+                VALUES ('U', now(), current_user, NEW.alumno_id, NEW.nombre, NEW.email_alumno, NEW.saldo, NEW.ubicacion);
             ELSIF (TG_OP = 'INSERT') THEN
-                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo)
-                VALUES ('I', now(), current_user, NEW.alumno_id, NEW.nombre, NEW.email_alumno, NEW.saldo);
+                INSERT INTO alumnos_audit (operation, stamp, userid, alumno_id, nombre, email_alumno, saldo, ubicacion)
+                VALUES ('I', now(), current_user, NEW.alumno_id, NEW.nombre, NEW.email_alumno, NEW.saldo, NEW.ubicacion);
             END IF;
             RETURN NULL; -- result is ignored since this is an AFTER trigger
         END;
@@ -48,14 +48,14 @@ DDL = (
     CREATE OR REPLACE FUNCTION process_asignatura_audit() RETURNS TRIGGER AS $asignaturas_audit$
         BEGIN
             IF (TG_OP = 'DELETE') THEN
-                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos)
-                VALUES ('D', now(), current_user, OLD.asignatura_id, OLD.profesor_id, OLD.nombre, OLD.precio, OLD.max_alumnos);
+                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos, area)
+                VALUES ('D', now(), current_user, OLD.asignatura_id, OLD.profesor_id, OLD.nombre, OLD.precio, OLD.max_alumnos, OLD.area);
             ELSIF (TG_OP = 'UPDATE') THEN
-                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos)
-                VALUES ('U', now(), current_user, NEW.asignatura_id, NEW.profesor_id, NEW.nombre, NEW.precio, NEW.max_alumnos);
+                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos, area)
+                VALUES ('U', now(), current_user, NEW.asignatura_id, NEW.profesor_id, NEW.nombre, NEW.precio, NEW.max_alumnos, NEW.area);
             ELSIF (TG_OP = 'INSERT') THEN
-                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos)
-                VALUES ('I', now(), current_user, NEW.asignatura_id, NEW.profesor_id, NEW.nombre, NEW.precio, NEW.max_alumnos);
+                INSERT INTO asignaturas_audit (operation, stamp, userid, asignatura_id, profesor_id, nombre, precio, max_alumnos, area)
+                VALUES ('I', now(), current_user, NEW.asignatura_id, NEW.profesor_id, NEW.nombre, NEW.precio, NEW.max_alumnos, NEW.area);
             END IF;
             RETURN NULL;
         END;

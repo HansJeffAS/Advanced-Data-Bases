@@ -37,6 +37,7 @@
     Operación: {{ reg.operation }} |
     Modificado por: {{ reg.userid }} |
     Datos: {{ reg.nombre }} ({{ reg.email_alumno }})
+    {% if reg.ubicacion %} | Ubicación: {{ reg.ubicacion }}{% endif %}
   </li>
   {% else %}
   <li>No hay registros en la auditoría.</li>

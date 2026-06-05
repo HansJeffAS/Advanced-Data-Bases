@@ -519,7 +519,7 @@ def search_alumnos_audit(
         conditions.append(sql.SQL("stamp < %s::date + INTERVAL '1 day'"))
         params.append(fecha_fin)
 
-    base = sql.SQL("SELECT audit_id, operation, stamp, userid, alumno_id, nombre, email_alumno, saldo FROM alumnos_audit")
+    base = sql.SQL("SELECT audit_id, operation, stamp, userid, alumno_id, nombre, email_alumno, saldo, ST_AsText(ubicacion) FROM alumnos_audit")
     where = sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions) if conditions else sql.SQL("")
     query = base + where + sql.SQL(" ORDER BY stamp DESC LIMIT %s OFFSET %s")
     params += [limit, offset]
@@ -527,7 +527,7 @@ def search_alumnos_audit(
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, params)
-            return [AlumnosAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], alumno_id=r[4], nombre=r[5], email_alumno=r[6], saldo=r[7]) for r in cur.fetchall()]
+            return [AlumnosAudit(audit_id=r[0], operation=r[1], stamp=r[2], userid=r[3], alumno_id=r[4], nombre=r[5], email_alumno=r[6], saldo=r[7], ubicacion=r[8]) for r in cur.fetchall()]
 
 
 def search_profesores_audit(
@@ -776,3 +776,50 @@ def get_olap_filter() -> list[dict]:
                 }
                 for r in cur.fetchall()
             ]
+
+def viajar_alumno_aula(alumno_id: int, asignatura_id: int) -> dict:
+    """
+    Calcula la distancia entre un alumno y el aula (área) de una asignatura,
+    y actualiza la ubicación del alumno al centro de dicha aula.
+    """
+    with get_connection() as conn:
+        conn.autocommit = False
+        try:
+            with conn.cursor() as cur:
+                # Obtenemos la distancia y el nuevo punto (centro del aula)
+                cur.execute("""
+                    SELECT 
+                        ST_Distance(al.ubicacion::geography, asig.area::geography) as distancia_metros,
+                        ST_Centroid(asig.area) as nuevo_punto
+                    FROM alumnos al
+                    CROSS JOIN asignaturas asig
+                    WHERE al.alumno_id = %s AND asig.asignatura_id = %s
+                """, (alumno_id, asignatura_id))
+                
+                row = cur.fetchone()
+                if not row:
+                    conn.rollback()
+                    return {"ok": False, "error": "Alumno o asignatura no encontrados."}
+                
+                distancia, nuevo_punto = row
+                
+                if distancia is None or nuevo_punto is None:
+                    conn.rollback()
+                    return {"ok": False, "error": "El alumno o la asignatura no tienen ubicación GIS definida."}
+                
+                # Actualizamos la ubicación del alumno
+                cur.execute("""
+                    UPDATE alumnos 
+                    SET ubicacion = %s 
+                    WHERE alumno_id = %s
+                """, (nuevo_punto, alumno_id))
+                
+                conn.commit()
+                return {
+                    "ok": True,
+                    "mensaje": "Viaje completado exitosamente.",
+                    "distancia_metros": round(distancia, 2)
+                }
+        except Exception as e:
+            conn.rollback()
+            return {"ok": False, "error": f"Error interno: {e}"}

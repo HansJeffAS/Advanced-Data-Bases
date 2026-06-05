@@ -7,13 +7,15 @@ from config import load_config
 DDL = (
     "CREATE EXTENSION IF NOT EXISTS unaccent;",
     "CREATE EXTENSION IF NOT EXISTS pg_trgm;",
+    "CREATE EXTENSION IF NOT EXISTS postgis;",
     "DROP TABLE IF EXISTS matriculas, alumnos, asignaturas, profesores, alumnos_audit, profesores_audit, asignaturas_audit, matriculas_audit CASCADE;", 
     """
     CREATE TABLE alumnos (
         alumno_id SERIAL PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL,
         email_alumno VARCHAR(255) NOT NULL,
-        saldo NUMERIC(10,2) DEFAULT 0.00 NOT NULL
+        saldo NUMERIC(10,2) DEFAULT 0.00 NOT NULL,
+        ubicacion GEOMETRY(Point, 4326)
     )
     """,
     """
@@ -29,7 +31,8 @@ DDL = (
         profesor_id INTEGER REFERENCES profesores(profesor_id) ON DELETE SET NULL,
         nombre JSONB NOT NULL,
         precio NUMERIC(10,2) DEFAULT 0.00 NOT NULL,
-        max_alumnos INTEGER DEFAULT 30 NOT NULL
+        max_alumnos INTEGER DEFAULT 30 NOT NULL,
+        area GEOMETRY(Polygon, 4326)
     )
     """,
     """
@@ -49,7 +52,8 @@ DDL = (
         alumno_id integer,
         nombre text NOT NULL,
         email_alumno text NOT NULL,
-        saldo numeric(10,2)
+        saldo numeric(10,2),
+        ubicacion GEOMETRY(Point, 4326)
     )
     """,
     """
@@ -73,7 +77,8 @@ DDL = (
         profesor_id integer,
         nombre JSONB NOT NULL,
         precio numeric(10,2),
-        max_alumnos integer
+        max_alumnos integer,
+        area GEOMETRY(Polygon, 4326)
     )
     """,
     """
@@ -141,7 +146,11 @@ DDL = (
     "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_audit_nombre_es ON asignaturas_audit USING GIN(to_tsvector('spanish', nombre->>'es'));",
     "CREATE INDEX IF NOT EXISTS idx_fts_asignaturas_audit_nombre_en ON asignaturas_audit USING GIN(to_tsvector('english', nombre->>'en'));",
     "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_audit_nombre_es ON asignaturas_audit USING GIN((nombre->>'es') gin_trgm_ops);",
-    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_audit_nombre_en ON asignaturas_audit USING GIN((nombre->>'en') gin_trgm_ops);"
+    "CREATE INDEX IF NOT EXISTS idx_trgm_asignaturas_audit_nombre_en ON asignaturas_audit USING GIN((nombre->>'en') gin_trgm_ops);",
+
+    # Índices GiST espaciales (Optimizaciones Críticas PostGIS)
+    "CREATE INDEX IF NOT EXISTS idx_gist_alumnos_ubicacion     ON alumnos          USING GIST(ubicacion);",
+    "CREATE INDEX IF NOT EXISTS idx_gist_asignaturas_area      ON asignaturas      USING GIST(area);"
 )
 
 def create_tables() -> None:

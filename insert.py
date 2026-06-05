@@ -29,8 +29,16 @@ def insert_alumnos():
         # Insertamos lote, usando array_insert=[] para que no se acumulen los datos
         alumnos_raw = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["name", "email"], seed=123 + i, array_insert=[])
 
-        # Añadimos saldo aleatorio entre 50 y 1500 €
-        alumnos = [(nombre, email, round(random.uniform(50.0, 1500.0), 2)) for nombre, email in alumnos_raw]
+        # Añadimos saldo aleatorio entre 50 y 1500 € y puntos GIS para al menos 10
+        alumnos = []
+        for index, (nombre, email) in enumerate(alumnos_raw):
+            saldo = round(random.uniform(50.0, 1500.0), 2)
+            ubicacion = ""
+            if index < 10:
+                longitud = random.uniform(-9.0, 3.0)
+                latitud = random.uniform(36.0, 43.0)
+                ubicacion = f"SRID=4326;POINT({longitud} {latitud})"
+            alumnos.append((nombre, email, saldo, ubicacion))
 
         # Se añaden al final del CSV
         with open('temp_data.csv', 'a', newline='', encoding='utf-8') as file:
@@ -53,7 +61,7 @@ def insert_alumnos():
     with psycopg.connect(**cfg) as conn:
         with conn.cursor() as cur:
             with open('temp_data.csv', 'r', encoding='utf-8') as f:
-                with cur.copy("COPY alumnos(nombre, email_alumno, saldo) FROM STDIN WITH (FORMAT csv)") as copy:
+                with cur.copy("COPY alumnos(nombre, email_alumno, saldo, ubicacion) FROM STDIN WITH (FORMAT csv)") as copy:
                     while data := f.read(8192):
                         copy.write(data)
     end_time = time.perf_counter()
@@ -143,15 +151,25 @@ def insert_asignaturas() -> int:
 
         asignaturas_raw = fake.generate_rows(cantidad_lote, locale="es_ES", attrs=["company"], seed=123 + i, max_rand_number=count_profesores, used_ids=used_ids, array_insert=[])
         
-        # Añadimos precio (entre 50 y 800 €) y max_alumnos (entre 5 y 50)
+        # Añadimos precio (entre 50 y 800 €), max_alumnos (entre 5 y 50) y área (Polygon) para las primeras 10
         asignaturas = []
-        for profesor_id, nombre_es in asignaturas_raw:
+        for index, (profesor_id, nombre_es) in enumerate(asignaturas_raw):
             nombre_en = fake_en.company()
+            precio = round(random.uniform(50.0, 800.0), 2)
+            max_alumnos = random.randint(5, 50)
+            area = ""
+            if index < 10:
+                longitud = random.uniform(-9.0, 3.0)
+                latitud = random.uniform(36.0, 43.0)
+                d = 0.001
+                area = f"SRID=4326;POLYGON(({longitud} {latitud}, {longitud+d} {latitud}, {longitud+d} {latitud+d}, {longitud} {latitud+d}, {longitud} {latitud}))"
+            
             asignaturas.append((
                 profesor_id, 
                 json.dumps({"es": nombre_es, "en": nombre_en}), 
-                round(random.uniform(50.0, 800.0), 2), 
-                random.randint(5, 50)
+                precio, 
+                max_alumnos,
+                area
             ))
 
         with open('temp_asignaturas.csv', 'a', newline='', encoding='utf-8') as file:
@@ -170,7 +188,7 @@ def insert_asignaturas() -> int:
     with psycopg.connect(**cfg) as conn:
         with conn.cursor() as cur:
             with open('temp_asignaturas.csv', 'r', encoding='utf-8') as f:
-                with cur.copy("COPY asignaturas(profesor_id, nombre, precio, max_alumnos) FROM STDIN WITH (FORMAT csv)") as copy:
+                with cur.copy("COPY asignaturas(profesor_id, nombre, precio, max_alumnos, area) FROM STDIN WITH (FORMAT csv)") as copy:
                     while data := f.read(8192):
                         copy.write(data)
     end_time = time.perf_counter()

@@ -43,6 +43,7 @@ class AlumnosAudit:
     nombre: str
     email_alumno: str
     saldo: Decimal
+    ubicacion: str | None = None
 
 @dataclass(frozen=True)
 class ProfesoresAudit:
