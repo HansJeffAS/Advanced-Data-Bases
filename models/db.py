@@ -758,8 +758,8 @@ def get_olap_filter() -> list[dict]:
             cur.execute("""
                 SELECT 
                     p.nombre as profesor,
-                    COUNT(m.matricula_id) FILTER (WHERE asig.precio > 50) as matriculas_caras,
-                    COUNT(m.matricula_id) FILTER (WHERE asig.precio <= 50) as matriculas_baratas,
+                    COUNT(m.matricula_id) FILTER (WHERE asig.precio > 200) as matriculas_caras,
+                    COUNT(m.matricula_id) FILTER (WHERE asig.precio <= 200) as matriculas_baratas,
                     COUNT(m.matricula_id) as total_matriculas
                 FROM profesores p
                 JOIN asignaturas asig ON p.profesor_id = asig.profesor_id
