@@ -37,7 +37,7 @@
 {% if resultado %}
 {% if resultado.ok %}
 <div class="resultado resultado-ok">
-  <strong>✓ {{ resultado.mensaje }}</strong><br>
+  <strong>{{ resultado.mensaje }}</strong><br>
   Alumno: <em>{{ resultado.alumno }}</em> → Asignatura: <em>{{ resultado.asignatura }}</em><br>
   Precio descontado: <strong>{{ "%.2f"|format(resultado.precio) }}€</strong> ·
   Saldo restante: <strong>{{ "%.2f"|format(resultado.saldo_restante) }}€</strong> ·
